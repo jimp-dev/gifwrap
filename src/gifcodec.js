@@ -2,7 +2,8 @@
 
 const Omggif = require('omggif');
 const RBTree = require('bintrees').RBTree;
-const { Gif, GifFrame, GifError } = require('./index');
+const { Gif, GifError } = require('./gif');
+const { GifFrame } = require('./gifframe');
 
 const PER_GIF_OVERHEAD = 34; // est. bytes per GIF excluding palette & data
 const PER_FRAME_OVERHEAD = 22; // est. bytes per frame excluding palette & data
@@ -11,63 +12,59 @@ const PER_FRAME_OVERHEAD = 22; // est. bytes per frame excluding palette & data
 
 class GifCodec {
 
-    // _transparentRGB - RGB given to transparent pixels (alpha=0) on decode, broken into RGB array (or nulls); or null to leave pixel RGB undefined
+    // _transparentRGB - RGB given to transparent pixels (alpha=0) on decode, broken into RGB array; defaults to 0x000000, which is fastest
 
     constructor(options = {}) {
-        this._transparentRGB = null; // assume transparent color not defined
-        if (typeof options.transparentColor === 'number') {
+        this._transparentRGB = null; // 0x000000
+        if (typeof options.transparentRGB === 'number' &&
+                options.transparentRGB !== 0)
+        {
             this._transparentRGB = [
-                (options.transparentColor >> 16) & 0xff,
-                (options.transparentColor >> 8) & 0xff,
-                options.transparentColor & 0xff
+                (options.transparentRGB >> 16) & 0xff,
+                (options.transparentRGB >> 8) & 0xff,
+                options.transparentRGB & 0xff
             ];
-        }
-        else if (options.transparentColor === null) {
-            this._transparentRGB = [ null, null, null ];
         }
     }
 
     decodeGif(buffer) {
-        return new Promise((resolve, reject) => {
+        try {
+            const reader = new Omggif.GifReader(buffer);
+            const frameCount = reader.numFrames();
+            const frames = [];
+            const spec = {
+                width: reader.width,
+                height: reader.height,
+                decoder: this
+            };
 
-            try {
-                const reader = new Omggif.GifReader(buffer);
-                const frameCount = reader.numFrames();
-                const frames = [];
-                const spec = {
-                    width: reader.width,
-                    height: reader.height,
-                    decoder: this
-                };
-
-                spec.loops = reader.loopCount();
-                if (Number.isInteger(spec.loops)) {
-                    if (spec.loops > 0) {
-                        ++spec.loops;
-                    }
+            spec.loops = reader.loopCount();
+            if (Number.isInteger(spec.loops)) {
+                if (spec.loops > 0) {
+                    ++spec.loops;
                 }
-                else {
-                    spec.loops = 1;
-                }
-
-                spec.usesTransparency = false;
-                for (let i = 0; i < frameCount; ++i) {
-                    const frameInfo = _decodeFrame(i);
-                    frames.push(frameInfo.frame);
-                    if (frameInfo.usesTransparency) {
-                        spec.usesTransparency = true;
-                    }
-                }
-
-                resolve(new Gif(buffer, frames, spec));
             }
-            catch (err) {
-                if (typeof err === 'string') {
-                    err = new GifError(err);
-                }
-                reject(err);
+            else {
+                spec.loops = 1;
             }
-        });
+
+            spec.usesTransparency = false;
+            for (let i = 0; i < frameCount; ++i) {
+                const frameInfo =
+                        this._decodeFrame(reader, i, spec.usesTransparency);
+                frames.push(frameInfo.frame);
+                if (frameInfo.usesTransparency) {
+                    spec.usesTransparency = true;
+                }
+            }
+            return Promise.resolve(new Gif(buffer, frames, spec));
+        }
+        catch (err) {
+            if (typeof err === 'string') {
+                err = new GifError(err);
+            }
+            return Promise.reject(err);
+        }
     }
 
     encodeGif(frames, spec = {}) {
@@ -76,15 +73,16 @@ class GifCodec {
         }
         let maxWidth = 0, maxHeight = 0;
         frames.forEach(frame => {
-            if (frame.bitmap.width > maxWidth) {
-                maxWidth = frame.bitmap.width;
+            const width = frame.xOffset + frame.bitmap.width;
+            if (width > maxWidth) {
+                maxWidth = width;
             }
-            if (frame.bitmap.height > maxHeight) {
-                maxHeight = frame.bitmap.height;
+            const height = frame.yOffset + frame.bitmap.height;
+            if (height > maxHeight) {
+                maxHeight = height;
             }
         });
 
-        // impl currently limited to specifying frame dimensions
         if (spec.width && spec.width !== maxWidth ||
                 spec.height && spec.height !== maxHeight)
         {
@@ -94,18 +92,6 @@ class GifCodec {
                     `(try not specifying GIF dimensions)`);
         }
                 
-        // impl currently requires all frames to have same dimensions
-        for (let i = 0; i < frames.length; ++i) {
-            const frame = frames[i];
-            if (frame.bitmap.width !== maxWidth ||
-                    frame.bitmap.height !== maxHeight)
-            {
-                throw new GifError(`Frame ${i} dimensions `+
-                        `${frame.bitmap.width} x ${frame.bitmap.height}`+
-                        ` != GIF dimensions ${maxWidth} x ${maxHeight}`);
-            }
-        }
-
         spec = Object.assign({}, spec); // clone to avoid munging caller's spec
         spec.width = maxWidth;
         spec.height = maxHeight;
@@ -127,30 +113,39 @@ class GifCodec {
         });
     }
 
-    _decodeFrame(frameIndex) {
+    _decodeFrame(reader, frameIndex, alreadyUsedTransparency) {
         const info = reader.frameInfo(frameIndex);
-        if (info.x !== 0 || info.y !== 0) {
-            // TBD: I don't know what x,y means yet
-            throw new GifError("GIF encoder does not support offset frames");
-        }
         const buffer = new Buffer(info.width * info.height * 4);
         reader.decodeAndBlitFrameRGBA(frameIndex, buffer);
 
         let usesTransparency = false;
-        if (this._transparentRGB !== null) {
-            // this would be more efficient in the decoder than in the adapter
-            for (let i = 0; i < buffer.length; i += 4) {
-                if (buffer[i] === undefined) {
-                    buffer[i] = this._transparentRGB[0];
-                    buffer[i + 1] = this._transparentRGB[1];
-                    buffer[i + 2] = this._transparentRGB[2];
-                    buffer[i + 3] = 0; // alpha
+        // this would be more efficient in the decoder than in the adapter
+        // TBD: is there a way to iterate over 32-bit ints instead?
+        if (this._transparentRGB === null) {
+            if (!alreadyUsedTransparency) {
+                for (let i = 3; i < buffer.length; i += 4) {
+                    if (buffer[i] === 0) {
+                        usesTransparency = true;
+                        i = buffer.length;
+                    }
+                }
+            }
+        }
+        else {
+            for (let i = 3; i < buffer.length; i += 4) {
+                if (buffer[i] === 0) {
+                    buffer[i - 3] = this._transparentRGB[0];
+                    buffer[i - 2] = this._transparentRGB[1];
+                    buffer[i - 1] = this._transparentRGB[2];
                     usesTransparency = true; // GIF might encode unused index
                 }
             }
         }
 
-        const frame = new GifFrame(buffer, info.width, info.height, {
+        const frame = new GifFrame(info.width, info.height, buffer, {
+            xOffset: info.x,
+            yOffset: info.y,
+            disposalMethod: info.disposal,
             isInterlaced: info.interlaced,
             delayHundreths: info.delay
         });
@@ -391,16 +386,19 @@ function _getSizeEstimateLocal(palettes, frames) {
 }
 
 function _writeFrame(gifWriter, frameIndex, frame, palette, isLocalPalette) {
+    if (frame.isInterlaced) {
+        throw new GifError("writing interlaced GIFs is not supported");
+    }
     const frameInfo = _getIndexedImage(frameIndex, frame, palette);
     const options = {
-        delay: frame.getDelay(),
-        disposal: 0, // only disposal supported for now
+        delay: frame.delayHundreths,
+        disposal: frame.disposalMethod,
         transparent: frameInfo.transparentIndex
     };
     _extendPaletteToPowerOf2(palette);
     if (isLocalPalette) {
         options.palette = palette.colors;
     }
-    gifWriter.addFrame(0, 0, frame.bitmap.width, frame.bitmap.height,
-            frameInfo.buffer, options);
+    gifWriter.addFrame(frame.xOffset, frame.yOffset, frame.bitmap.width,
+            frame.bitmap.height, frameInfo.buffer, options);
 }

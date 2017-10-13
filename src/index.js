@@ -1,12 +1,14 @@
 'use strict';
 
 const { Gif, GifError } = require('./gif');
-const { GifFrame } = require('./gifframe');
 const { GifCodec } = require('./gifcodec');
+const { GifFrame } = require('./gifframe');
+const { GifUtil } = require('./gifutil');
 
 module.exports = {
     Gif,
-    GifFrame,
     GifCodec,
+    GifFrame,
+    GifUtil,
     GifError
 };

@@ -5,15 +5,21 @@ const RBTree = require('bintrees').RBTree;
 
 class GifFrame extends Jimp {
 
-    // _gifDelayHundreths - duration of frame in hundreths of a second
-    // _gifIsInterlaced - whether the image is interlaced
+    // xOffset - x offset of bitmap on GIF (defaults to 0)
+    // yOffset - y offset of bitmap on GIF (defaults to 0)
+    // disposalMethod - GIF disposal method when handling partial images
+    // delayHundreths - duration of frame in hundreths of a second
+    // isInterlaced - whether the image is interlaced (defaults to false)
 
     constructor(...args) {
         if (args[0] instanceof GifFrame) {
             const sourceFrame = args[0];
             super(sourceFrame);
-            this._gifDelayHundreths = sourceFrame._gifDelayHundreths;
-            this._gifIsInterlaced = sourceFrame._gifIsInterlaced;
+            this.xOffset = sourceFrame.xOffset;
+            this.yOffset = sourceFrame.yOffset;
+            this.disposalMethod = sourceFrame.disposalMethod;
+            this.delayHundreths = sourceFrame.delayHundreths;
+            this.isInterlaced = sourceFrame.isInterlaced;
         }
         else {
             // Jimp is throwing undefined when the constructor parameters are wrong, so we'll enforce valid parameters here.
@@ -74,19 +80,14 @@ class GifFrame extends Jimp {
             else {
                 _throwBadConstructor();
             }
-            this._gifDelayHundreths = options.delayHundreths || 10;
-            this._gifIsInterlaced = options.isInterlaced || false;
+            this.xOffset = options.xOffset || 0;
+            this.yOffset = options.yOffset || 0;
+            this.disposalMethod = options.disposalMethod || 0;
+            this.delayHundreths = options.delayHundreths || 10;
+            this.isInterlaced = options.isInterlaced || false;
         }
     }
     
-    getDelay() {
-        return this._gifDelayHundreths;
-    }
-
-    isInterlaced() {
-        return this._gifIsInterlaced;
-    }
-
     makePalette() {
         // returns palette with colors sorted low to high
         const tree = new RBTree((a, b) => (a - b));
@@ -113,15 +114,13 @@ class GifFrame extends Jimp {
         }
         return { colors, usesTransparency };
     }
-
-    setDelay(hundrethsSec) {
-        this._gifDelayHundreths = hundrethsSec;
-    }
-
-    setInterlaced(isInterlaced) {
-        this._gifIsInterlaced = isInterlaced;
-    }
 }
+
+GifFrame.DisposeToAnything = 0;
+GifFrame.DisposeNothing = 1;
+GifFrame.DisposeToBackground = 2;
+GifFrame.DisposeToPrevious = 3;
+
 exports.GifFrame = GifFrame;
 
 function _throwBadConstructor() {

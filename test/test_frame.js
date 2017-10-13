@@ -1,13 +1,12 @@
 'use strict';
 
-const Path = require('path');
 const Assert = require('assert');
 const Jimp = require('jimp');
 const Bitmap = require('./lib/bitmap');
 const { Gif, GifFrame, GifError } = require('../src/index');
 
-const SAMPLE_PNG_PATH = Path.join(__dirname, "fixtures/lenna.png");
-const SAMPLE_JPG_PATH = Path.join(__dirname, "fixtures/pelagrina.jpg")
+const SAMPLE_PNG_PATH = Bitmap.getFixturePath('lenna.png');
+const SAMPLE_JPG_PATH = Bitmap.getFixturePath('pelagrina.jpg');
 
 describe("Jimp construction behavior", () => {
 
@@ -36,8 +35,8 @@ describe("Jimp construction behavior", () => {
         const color = 0x01020304;
         const j = new Jimp(10, 5, color);
         const f = new GifFrame(j);
-        Assert.notStrictEqual(j.bitmap, f.bitmap);
-        Assert.deepStrictEqual(j.bitmap, f.bitmap);
+        Assert.notStrictEqual(f.bitmap, j.bitmap);
+        Assert.deepStrictEqual(f.bitmap, j.bitmap);
         _assertDefaultFrameOptions(f);
         done();
     });
@@ -73,8 +72,8 @@ describe("GifFrame good construction behavior", () => {
         const f = new GifFrame(10, 5, { delayHundreths: 100 });
         Assert.strictEqual(f.bitmap.width, 10);
         Assert.strictEqual(f.bitmap.height, 5);
-        Assert.strictEqual(f.getDelay(), 100);
-        Assert.strictEqual(f.isInterlaced(), false);
+        Assert.strictEqual(f.delayHundreths, 100);
+        Assert.strictEqual(f.isInterlaced, false);
         done();
     });
 
@@ -85,7 +84,7 @@ describe("GifFrame good construction behavior", () => {
         Assert.strictEqual(f.bitmap.width, 10);
         Assert.strictEqual(f.bitmap.height, 5);
         Assert.strictEqual(f.bitmap.data.readUInt32BE(0), color);
-        Assert.strictEqual(f.isInterlaced(), true);
+        Assert.strictEqual(f.isInterlaced, true);
         done();
     });
 
@@ -102,8 +101,8 @@ describe("GifFrame good construction behavior", () => {
         const f = new GifFrame(bitmap.width, bitmap.height, bitmap.data,
                     { delayHundreths: 200, isInterlaced: true });
         Assert.deepStrictEqual(f.bitmap, bitmap);
-        Assert.strictEqual(f.getDelay(), 200);
-        Assert.strictEqual(f.isInterlaced(), true);
+        Assert.strictEqual(f.delayHundreths, 200);
+        Assert.strictEqual(f.isInterlaced, true);
         done();
     });
 
@@ -120,8 +119,8 @@ describe("GifFrame good construction behavior", () => {
         const f = new GifFrame(bitmap,
                     { delayHundreths: 200, isInterlaced: true });
         Assert.deepStrictEqual(f.bitmap, bitmap);
-        Assert.strictEqual(f.getDelay(), 200);
-        Assert.strictEqual(f.isInterlaced(), true);
+        Assert.strictEqual(f.delayHundreths, 200);
+        Assert.strictEqual(f.isInterlaced, true);
         done();
     });
 
@@ -133,10 +132,10 @@ describe("GifFrame good construction behavior", () => {
         });
         f1.bitmap = Bitmap.getBitmap('singleFrameBWOpaque');
         const f2 = new GifFrame(f1);
-        Assert.notStrictEqual(f1.bitmap, f2.bitmap);
-        Assert.deepStrictEqual(f1.bitmap, f2.bitmap);
-        Assert.equal(f1.getDelay(), f2.getDelay());
-        Assert.equal(f1.isInterlaced(), f2.isInterlaced());
+        Assert.notStrictEqual(f2.bitmap, f1.bitmap);
+        Assert.deepStrictEqual(f2.bitmap, f1.bitmap);
+        Assert.equal(f2.delayHundreths, f1.delayHundreths);
+        Assert.equal(f2.isInterlaced, f1.isInterlaced);
         done();
     });
 });
@@ -230,22 +229,6 @@ describe("GifFrame bad construction behavior", () => {
     });
 });
 
-describe("GifFrame getters and setters", () => {
-
-    it("changes delay and whether interlaced", (done) => {
-
-        const f = new GifFrame(10, 5);
-        const delay2 = f.getDelay() * 2;
-        f.setDelay(delay2)
-        Assert.strictEqual(f.getDelay(), delay2);
-
-        const interlaced2 = !f.isInterlaced();
-        f.setInterlaced(interlaced2);
-        Assert.strictEqual(f.isInterlaced(), interlaced2);
-        done();
-    });        
-});
-
 describe("GifFrame palette", () => {
 
     it("is monocolor without transparency", (done) => {
@@ -312,6 +295,6 @@ describe("GifFrame palette", () => {
 });
 
 function _assertDefaultFrameOptions(frame) {
-    Assert.strictEqual(typeof frame.getDelay(), 'number');
-    Assert.strictEqual(frame.isInterlaced(), false);
+    Assert.strictEqual(typeof frame.delayHundreths, 'number');
+    Assert.strictEqual(frame.isInterlaced, false);
 }

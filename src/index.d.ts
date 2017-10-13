@@ -13,7 +13,7 @@ interface GifSpec {
     height?: number;
     loops?: number;
     usesTransparency?: boolean;
-    optimization?: 1 | 2 | 3;
+    optimization?: 1|2|3;
 }
 
 interface GifEncoder {
@@ -30,16 +30,14 @@ declare class Gif implements GifSpec {
     buffer: Buffer;
 
     constructor(frames: Frame[], buffer: Buffer, spec?: GifSpec);
-
-    static read(source: string|Buffer, decoder?: GifDecoder): Promise<Gif>;
-    static setDefaultDecoder(decoder: GifDecoder): void;
-    static setDefaultEncoder(encoder: GifEncoder): void;
-    static write(path: string, expectGifSuffix?: boolean, frames: Frame[], spec?: GifSpec): Promise<Gif>;
 }
 
 interface GifFrameOptions {
-    delayHundreths: number;
-    isInterlaced: boolean;
+    xOffset?: number;
+    yOffset?: number;
+    disposalMethod?: 0|1|2|3;
+    delayHundreths?: number;
+    isInterlaced?: boolean;
 }
 
 interface BitmapSpec {
@@ -55,6 +53,17 @@ interface GifPalette {
 
 declare class GifFrame extends Jimp {
 
+    static readonly DisposeToAnything: 0;
+    static readonly DisposeNothing: 1;
+    static readonly DisposeToBackground: 2;
+    static readonly DisposeToPrevious: 3;
+
+    xOffset: number;
+    yOffset: number;
+    disposalMethod: 0|1|2|3;
+    delayHundreths: number;
+    isInterlaced: boolean;
+
     constructor(width: number, height: number, backgroundColor?: number, options?: GifFrameOptions);
     constructor(width: number, height: number, buffer: Buffer, options?: GifFrameOptions);
     constructor(path: string, callback?: JimpCallback);
@@ -62,16 +71,12 @@ declare class GifFrame extends Jimp {
     constructor(frame: GifFrame);
     constructor(bitmap: BitmapSpec, options?: GifFrameOptions);
 
-    getDelay(): number;
     getPixelBuffer(): Buffer;
-    isInterlaced(): boolean;
     makePalette(): GifPalette;
-    setDelay(hundrethsSec: number): void;
-    setInterlaced(isInterlaced: boolean): void;
 }
 
 interface GifCodecOptions {
-    transparentColor?: number;
+    transparentRGB?: number;
 }
 
 declare class GifCodec implements GifEncoder, GifDecoder {
@@ -82,4 +87,18 @@ declare class GifCodec implements GifEncoder, GifDecoder {
 declare class GifError extends Error {
 
     constructor(message: string);
+}
+
+interface GifUtilConfig {
+    decoder?: GifDecoder;
+    encoder?: GifEncoder;
+}
+
+declare class GifUtil {
+
+    constructor(options: GifUtilConfig);
+
+    create(options: GifUtilConfig): GifUtil;
+    read(source: string|Buffer): Promise<Gif>;
+    write(path: string, frames: Frame[], spec?: GifSpec): Promise<Gif>;
 }
