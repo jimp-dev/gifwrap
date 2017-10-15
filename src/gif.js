@@ -8,7 +8,7 @@ class Gif {
     // height - height of GIF in pixels
     // loops - 0 = unending; (n > 0) = iterate n times
     // usesTransparency - whether any frames have transparent pixels
-    // optimization - one of Gif.OptimizeFor* after encoding
+    // storage - method of storing color palette (global or local)
     // frames - array of frames
     // buffer - GIF-formatted data
 
@@ -17,20 +17,23 @@ class Gif {
         this.height = spec.height;
         this.loops = spec.loops;
         this.usesTransparency = spec.usesTransparency;
-        this.optimization = spec.optimization;
+        this.storage = spec.storage;
         this.frames = frames;
         this.buffer = buffer;
     }
 }
 
-Gif.OptimizeForSpeed = 1;
-Gif.OptimizeForSize = 2;
-Gif.OptimizeForBoth = 3;
+Gif.StoreGlobalIfCan = 0;
+Gif.StoreGlobal = 1;
+Gif.StoreLocal = 2;
 
 class GifError extends ExtendableError {
 
-    constructor(message) {
-        super(message);
+    constructor(messageOrError) {
+        super(messageOrError);
+        if (messageOrError instanceof Error) {
+            this.stack = 'Gif' + messageOrError.stack;
+        }
     }
 }
 

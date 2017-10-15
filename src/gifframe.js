@@ -7,9 +7,9 @@ class GifFrame extends Jimp {
 
     // xOffset - x offset of bitmap on GIF (defaults to 0)
     // yOffset - y offset of bitmap on GIF (defaults to 0)
-    // disposalMethod - GIF disposal method when handling partial images
+    // disposalMethod - pixel disposal method when handling partial images
     // delayHundreths - duration of frame in hundreths of a second
-    // isInterlaced - whether the image is interlaced (defaults to false)
+    // interlaced - whether the image is interlaced (defaults to false)
 
     constructor(...args) {
         if (args[0] instanceof GifFrame) {
@@ -19,10 +19,10 @@ class GifFrame extends Jimp {
             this.yOffset = sourceFrame.yOffset;
             this.disposalMethod = sourceFrame.disposalMethod;
             this.delayHundreths = sourceFrame.delayHundreths;
-            this.isInterlaced = sourceFrame.isInterlaced;
+            this.interlaced = sourceFrame.interlaced;
         }
         else {
-            // Jimp is throwing undefined when the constructor parameters are wrong, so we'll enforce valid parameters here.
+            // Jimp is throwing undefined, itself an error, for invalid constructor parameters, so we'll enforce valid parameters here.
             let options = {};
             if (typeof args[0] === 'string' && typeof args[1] === 'function' &&
                     args.length === 2)
@@ -83,8 +83,8 @@ class GifFrame extends Jimp {
             this.xOffset = options.xOffset || 0;
             this.yOffset = options.yOffset || 0;
             this.disposalMethod = options.disposalMethod || 0;
-            this.delayHundreths = options.delayHundreths || 10;
-            this.isInterlaced = options.isInterlaced || false;
+            this.delayHundreths = options.delayHundreths || 8;
+            this.interlaced = options.interlaced || false;
         }
     }
     
@@ -118,7 +118,7 @@ class GifFrame extends Jimp {
 
 GifFrame.DisposeToAnything = 0;
 GifFrame.DisposeNothing = 1;
-GifFrame.DisposeToBackground = 2;
+GifFrame.DisposeToBackgroundColor = 2;
 GifFrame.DisposeToPrevious = 3;
 
 exports.GifFrame = GifFrame;

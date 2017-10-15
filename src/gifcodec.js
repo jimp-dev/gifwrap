@@ -1,12 +1,12 @@
 'use strict';
 
-const Omggif = require('omggif');
 const RBTree = require('bintrees').RBTree;
+const Omggif = require('./omggif');
 const { Gif, GifError } = require('./gif');
 const { GifFrame } = require('./gifframe');
 
 const PER_GIF_OVERHEAD = 34; // est. bytes per GIF excluding palette & data
-const PER_FRAME_OVERHEAD = 22; // est. bytes per frame excluding palette & data
+const PER_FRAME_OVERHEAD = 23; // est. bytes per frame excluding palette & data
 
 // TBD: use buffer.writeUInt32BE() and buffer.readUInt32BE()
 
@@ -29,7 +29,13 @@ class GifCodec {
 
     decodeGif(buffer) {
         try {
-            const reader = new Omggif.GifReader(buffer);
+            let reader;
+            try {
+                reader = new Omggif.GifReader(buffer);
+            }
+            catch (err) {
+                throw new GifError(err);
+            }
             const frameCount = reader.numFrames();
             const frames = [];
             const spec = {
@@ -60,9 +66,6 @@ class GifCodec {
             return Promise.resolve(new Gif(buffer, frames, spec));
         }
         catch (err) {
-            if (typeof err === 'string') {
-                err = new GifError(err);
-            }
             return Promise.reject(err);
         }
     }
@@ -96,8 +99,8 @@ class GifCodec {
         spec.width = maxWidth;
         spec.height = maxHeight;
         spec.loops = spec.loops || 0;
-        spec.optimization = spec.optimization || Gif.OptimizeBoth;
-        spec.usesTransparency = usesTransparency;
+        spec.storage = spec.storage || Gif.GlobalIfCan;
+        spec.usesTransparency = spec.usesTransparency || false;
 
         return new Promise((resolve, reject) => {
 
@@ -105,18 +108,21 @@ class GifCodec {
                 resolve(_encodeGif(frames, spec));
             }
             catch (err) {
-                if (typeof err === 'string') {
-                    err = new GifError(err);
-                }
                 reject(err);
             }
         });
     }
 
     _decodeFrame(reader, frameIndex, alreadyUsedTransparency) {
-        const info = reader.frameInfo(frameIndex);
-        const buffer = new Buffer(info.width * info.height * 4);
-        reader.decodeAndBlitFrameRGBA(frameIndex, buffer);
+        let info, buffer;
+        try {
+            info = reader.frameInfo(frameIndex);
+            buffer = new Buffer(info.width * info.height * 4);
+            reader.decodeAndBlitFrameRGBA(frameIndex, buffer);
+        }
+        catch (err) {
+            throw new GifError(err);
+        }
 
         let usesTransparency = false;
         // this would be more efficient in the decoder than in the adapter
@@ -146,7 +152,7 @@ class GifCodec {
             xOffset: info.x,
             yOffset: info.y,
             disposalMethod: info.disposal,
-            isInterlaced: info.interlaced,
+            interlaced: info.interlaced,
             delayHundreths: info.delay
         });
         return { frame, usesTransparency };
@@ -192,7 +198,7 @@ function _encodeGif(frames, spec) {
     let usesTransparency = false;
     const localPalettes = [];
     for (let i = 0; i < frames.length; ++i) {
-        let palette = frame[i].makePalette();
+        let palette = frames[i].makePalette();
         palette.indexSize = palette.colors.length;
         if (palette.usesTransparency) {
             ++palette.indexSize;
@@ -212,35 +218,37 @@ function _encodeGif(frames, spec) {
                 `transparency, but the GIF actually ${gifSays} it `+
                 `(try not specifying 'usesTransparency')`);
     }
-    const localSizeEst = _getSizeEstimateLocal(localPalettes, frames);
 
-    // use local frame palettes if optimizing for speed
+    let globalPaletteTree, indexSize;
+    if (spec.storage <= Gif.StoreGlobal) {
+        globalPaletteTree = new RBTree((a, b) => (a - b));
+        localPalettes.forEach(palette => {
 
-    if (spec.optimization === Gif.OptimizeSpeed) {
-        return _encodeLocal(frames, spec, localSizeEst, localPalettes,
-                    loopCount);
-    }
+            palette.colors.forEach(color => {
 
-    // otherwise decide whether to use a global palette
-
-    const globalPaletteTree = new RBTree((a, b) => (a - b));
-    localPalettes.forEach(palette => {
-
-        palette.colors.forEach(color => {
-
-            if (!globalPaletteTree.find(color)) {
-                globalPaletteTree.insert(color);
-            }
+                if (!globalPaletteTree.find(color)) {
+                    globalPaletteTree.insert(color);
+                }
+            });
         });
-    });
-    let indexSize = globalPaletteTree.size;
-    if (usesTransparency) {
-        ++indexSize;
+        indexSize = globalPaletteTree.size;
+        if (usesTransparency) {
+            ++indexSize;
+        }
+        if (indexSize > 256 ) { // if global palette impossible
+            if (spec.storage === Gif.StoreGlobal) {
+                throw new GifError("Too many color indexes to store global");
+            }
+            spec.storage = Gif.StoreLocal
+        }
     }
-    if (indexSize > 256 ) { // if global palette impossible
+
+    if (spec.storage === Gif.StoreLocal) {
+        const localSizeEst = _getSizeEstimateLocal(localPalettes, frames);
         return _encodeLocal(frames, spec, localSizeEst, localPalettes,
                     loopCount);
     }
+
     const colors = Array(globalPaletteTree.size);
     const iter = globalPaletteTree.iterator();
     for (let i = 0; i < colors.length; ++i) {
@@ -249,36 +257,30 @@ function _encodeGif(frames, spec) {
     const globalPalette = { colors, indexSize, usesTransparency };
     const globalSizeEst = _getSizeEstimateGlobal(globalPalette, frames);
 
-    // when optimizing for both size and speed, base choice of local and
-    // global palettes on the estimated sizes of the two buffers
-
-    if (spec.optimization === Gif.OptimizeBoth) {
-        if (globalSizeEst <= localSizeEst) {
-            return _encodeGlobal(frames, spec, globalSizeEst, globalPalette,
-                        loopCount);
-        }
-        return _encodeLocal(frames, spec, localSizeEst, localPalettes,
-                    loopCount);
-    }
-
-    // when optimizing for size, generate both GIFs and choose the smaller
-
-    const globalBuffer = _encodeGlobal(frames, spec, globalSizeEst,
-                                globalPalette, loopCount);
-    const localBuffer =
-            _encodeLocal(frames, spec, localSizeEst, localPalettes, loopCount);
-    return (globalBuffer.length <= localBuffer.length
-                ? globalBuffer : localBuffer);
+    return _encodeGlobal(frames, spec, globalSizeEst, globalPalette, loopCount);
 }
 
 function _encodeGlobal(frames, spec, bufferSizeEst, globalPalette, loopCount) {
+    console.log("### GLOBAL");
     const buffer = new Buffer(bufferSizeEst);
+    // would be inefficient for frames to lookup colors in extended palette 
+    const extendedGlobalPalette = {
+        colors: globalPalette.colors.slice(),
+        usesTransparency: globalPalette.usesTransparency
+    };
+    _extendPaletteToPowerOf2(extendedGlobalPalette);
     const options = {
-        palette: globalPalette.colors,
+        palette: extendedGlobalPalette.colors,
         loop: loopCount
     };
-    const gifWriter =
-            new Omggif.GifWriter(buffer, spec.width, spec.height, options);
+    let gifWriter;
+    try {
+        gifWriter = new Omggif.GifWriter(buffer, spec.width, spec.height,
+                            options);
+    }
+    catch (err) {
+        throw new GifError(err);
+    }
     for (let i = 0; i < frames.length; ++i) {
         _writeFrame(gifWriter, i, frames[i], globalPalette, false);
     }
@@ -286,12 +288,19 @@ function _encodeGlobal(frames, spec, bufferSizeEst, globalPalette, loopCount) {
 }
 
 function _encodeLocal(frames, spec, bufferSizeEst, localPalettes, loopCount) {
+    console.log("### LOCAL");
     const buffer = new Buffer(bufferSizeEst);
     const options = {
         loop: loopCount
     };
-    const gifWriter =
-            new Omggif.GifWriter(buffer, spec.width, spec.height, options);
+    let gifWriter;
+    try {
+        gifWriter = new Omggif.GifWriter(buffer, spec.width, spec.height,
+                            options);
+    }                            
+    catch (err) {
+        throw new GifError(err);
+    }
     for (let i = 0; i < frames.length; ++i) {
         _writeFrame(gifWriter, i, frames[i], localPalettes[i], true);
     }
@@ -312,11 +321,12 @@ function _extendPaletteToPowerOf2(palette) {
     colors.fill(0, colorCount);
 }
 
-function _getFrameSizeEst(frame, palette, pixelBitWidth) {
+function _getFrameSizeEst(frame, pixelBitWidth) {
     let byteLength = frame.bitmap.width * frame.bitmap.height;
     byteLength = Math.ceil(byteLength * pixelBitWidth / 8);
-    byteLength += Math.ceil(byteLength / 255); // add block ends
-    return (PER_FRAME_OVERHEAD + byteLength + 3*palette.indexSize);
+    byteLength += Math.ceil(byteLength / 255); // add block size bytes
+    // assume maximum palete size because it might get extended for power of 2
+    return (PER_FRAME_OVERHEAD + byteLength + 3 * 256);
 }
 
 function _getIndexedImage(frameIndex, frame, palette) {
@@ -325,7 +335,7 @@ function _getIndexedImage(frameIndex, frame, palette) {
             _colorLookupLinear : _colorLookupBinary);
     const colorBuffer = frame.bitmap.data;
     const indexBuffer = new Buffer(colorBuffer.length/4);
-    const transparentIndex = colors.length;
+    let transparentIndex = colors.length;
     let i = 0, j = 0;
 
     while (i < colorBuffer.length) {
@@ -336,7 +346,7 @@ function _getIndexedImage(frameIndex, frame, palette) {
             indexBuffer[j] = colorToIndexFunc(colors, color);
         }
         else {
-            indexBuffer[i] = transparentIndex;
+            indexBuffer[j] = transparentIndex;
         }
         i += 4; // skip alpha
         ++j;
@@ -370,7 +380,7 @@ function _getSizeEstimateGlobal(globalPalette, frames) {
     let sizeEst = PER_GIF_OVERHEAD + globalPalette.indexSize * 3;
     const pixelBitWidth = _getPixelBitWidth(globalPalette);
     frames.forEach(frame => {
-        sizeEst += _getFrameSizeEst(frame, 0, pixelBitWidth);
+        sizeEst += _getFrameSizeEst(frame, pixelBitWidth);
     });
     return sizeEst; // should be the upper limit
 }
@@ -380,13 +390,13 @@ function _getSizeEstimateLocal(palettes, frames) {
     for (let i = 0; i < frames.length; ++i ) {
         const palette = palettes[i];
         const pixelBitWidth = _getPixelBitWidth(palette);
-        sizeEst += _getFrameSizeEst(frames[i], palette, pixelBitWidth);
+        sizeEst += _getFrameSizeEst(frames[i], pixelBitWidth);
     }
     return sizeEst; // should be the upper limit
 }
 
 function _writeFrame(gifWriter, frameIndex, frame, palette, isLocalPalette) {
-    if (frame.isInterlaced) {
+    if (frame.interlaced) {
         throw new GifError("writing interlaced GIFs is not supported");
     }
     const frameInfo = _getIndexedImage(frameIndex, frame, palette);
@@ -395,10 +405,15 @@ function _writeFrame(gifWriter, frameIndex, frame, palette, isLocalPalette) {
         disposal: frame.disposalMethod,
         transparent: frameInfo.transparentIndex
     };
-    _extendPaletteToPowerOf2(palette);
     if (isLocalPalette) {
+        _extendPaletteToPowerOf2(palette); // ok cause palette never used again
         options.palette = palette.colors;
     }
-    gifWriter.addFrame(frame.xOffset, frame.yOffset, frame.bitmap.width,
-            frame.bitmap.height, frameInfo.buffer, options);
+    try {
+        gifWriter.addFrame(frame.xOffset, frame.yOffset, frame.bitmap.width,
+                frame.bitmap.height, frameInfo.buffer, options);
+    }
+    catch (err) {
+        throw new GifError(err);
+    }
 }

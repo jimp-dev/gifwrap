@@ -5,15 +5,12 @@ type JimpCallback = (err: Error, image: Jimp) => void;
 
 interface GifSpec {
 
-    static readonly OptimizeForSpeed: 1;
-    static readonly OptimizeForSize: 2;
-    static readonly OptimizeForBoth: 3;
-
     width?: number;
     height?: number;
     loops?: number;
     usesTransparency?: boolean;
-    optimization?: 1|2|3;
+    colors?: number[];
+    storage?: 1|2|3;
 }
 
 interface GifEncoder {
@@ -25,6 +22,10 @@ interface GifDecoder {
 }
 
 declare class Gif implements GifSpec {
+
+    static readonly StoreGlobalIfCan: 0;
+    static readonly StoreGlobal: 1;
+    static readonly StoreLocal: 2;
 
     frames: Frame[];
     buffer: Buffer;
@@ -55,7 +56,7 @@ declare class GifFrame extends Jimp {
 
     static readonly DisposeToAnything: 0;
     static readonly DisposeNothing: 1;
-    static readonly DisposeToBackground: 2;
+    static readonly DisposeToBackgroundColor: 2;
     static readonly DisposeToPrevious: 3;
 
     xOffset: number;

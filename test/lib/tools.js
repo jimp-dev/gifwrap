@@ -1,0 +1,152 @@
+'use strict';
+
+const Assert = require('assert');
+const Path = require('path');
+const Bitmaps = require('./bitmaps');
+const { GifFrame } = require('../../src/gifframe');
+
+exports.checkFrameDefaults = function (actualInfo, options, frameIndex = 0) {
+    options = Object.assign({}, options); // don't munge caller
+    options.xOffset = options.xOffset || 0;
+    options.yOffset = options.yOffset || 0;
+    options.delayHundreths = options.delayHundreths || 8;
+    options.interlaced = (options.interlaced === true);
+    options.disposalMethod =
+            (options.disposalMethod || GifFrame.DisposeToAnything);
+    exports.verifyFrameInfo(actualInfo, options, frameIndex);
+}
+
+exports.compareToFrameDump = function (actualFrames, expectedDump) {
+    Assert.ok(Array.isArray(actualFrames));
+    Assert.strictEqual(actualFrames.length, expectedDump.length);
+    for (let i = 0; i < actualFrames.length; ++i) {
+        const actualFrame = actualFrames[i];
+        const dump = expectedDump[i];
+        exports.verifyFrameInfo(actualFrame, {
+            xOffset: dump[0],
+            yOffset: dump[1],
+            bitmap: {
+                width: dump[2],
+                height: dump[3]
+            },
+            delayHundreths: dump[4],
+            interlaced: dump[5],
+            disposalMethod: dump[6]
+        }, i);
+    }
+}
+
+exports.dumpFramesAsCode = function (frames) {
+    let first = true;
+    process.stdout.write("[\n");
+    frames.forEach(f => {
+        if (!first) {
+            process.stdout.write(",\n");
+        }
+        process.stdout.write(`    [${f.xOffset}, ${f.yOffset}, `+
+                `${f.bitmap.width}, ${f.bitmap.height}, `+
+                `${f.delayHundreths}, ${f.interlaced}, ${f.disposalMethod}]`);
+        first = false;
+    });
+    process.stdout.write("\n]\n");
+}
+
+exports.getBitmap = function (bitmapName, transparentRGB) {
+    const stringPic = Bitmaps.PREMADE[bitmapName];
+    if (stringPic === undefined) {
+        throw new Error(`Bitmap '${bitmapName}' not found`);
+    }
+    if (Array.isArray(stringPic[0])) {
+        throw new Error(`'${bitmapName}' is a bitmap series`);
+    }
+    return _stringsToBitmap(stringPic, transparentRGB);
+}
+
+exports.getSeries = function (seriesName, transparentRGB) {
+    const series = Bitmaps.PREMADE[seriesName];
+    if (series === undefined) {
+        throw new Error(`Bitmap series '${seriesName}' not found`);
+    }
+    if (!Array.isArray(series[0])) {
+        throw new Error(`'${seriesName}' is not a bitmap series`);
+    }
+    return series.map(stringPic =>
+            (_stringsToBitmap(stringPic, transparentRGB)));
+}
+
+exports.verifyFrameInfo = function (actual, expected, frameIndex=0, note='') {
+    expected = Object.assign({}, expected); // don't munge caller
+    if (expected.xOffset !== undefined) {
+        Assert.strictEqual(actual.xOffset, expected.xOffset,
+                `frame ${frameIndex} same x offset${note}`);
+    }
+    if (expected.yOffset !== undefined) {
+        Assert.strictEqual(actual.yOffset, expected.yOffset,
+                `frame ${frameIndex} same y offset${note}`);
+    }
+    if (expected.bitmap !== undefined) {
+        Assert.strictEqual(actual.bitmap.width, expected.bitmap.width,
+                `frame ${frameIndex} same width${note}`);
+        Assert.strictEqual(actual.bitmap.height, expected.bitmap.height,
+                `frame ${frameIndex} same height${note}`);
+    }
+    if (expected.delayHundreths !== undefined) {
+        Assert.strictEqual(actual.delayHundreths, expected.delayHundreths,
+                `frame ${frameIndex} same delay${note}`);
+    }
+    if (expected.disposalMethod !== undefined) {
+        Assert.strictEqual(actual.disposalMethod, expected.disposalMethod,
+                `frame ${frameIndex} same disposal method${note}`);
+    }
+    Assert.strictEqual(actual.interlaced, (expected.interlaced === true),
+            `frame ${frameIndex} same interlacing${note}`);
+}
+
+function _stringsToBitmap(stringPic, transparentRGB) {
+    const trans = transparentRGB; // shortens code, leaves parameter clear
+    const width = stringPic[0].length;
+    const height = stringPic.length;
+    const data = new Buffer(width * height * 4);
+    let offset = 0;
+
+    for (let y = 0; y < height; ++y) {
+        const row = stringPic[y];
+        if (row.length !== width) {
+            throw new Error("Inconsistent pixel string length");
+        }
+        for (let x = 0; x < width; ++x) {
+            if (Bitmaps.COLORS[row[x]] !== undefined) {
+                const color = Bitmaps.COLORS[row[x]];
+                const alpha = color & 0xff;
+                if (alpha === 255 || trans === undefined) {
+                    data[offset] = (color >> 24) & 0xff;
+                    data[offset + 1] = (color >> 16) & 0xff;
+                    data[offset + 2] = (color >> 8) & 0xff;
+                    data[offset + 3] = color & 0xff;
+                }
+                else {
+                    // not concerned about speed
+                    data[offset] = (trans >> 16) & 0xff;
+                    data[offset + 1] = (trans >> 8) & 0xff;
+                    data[offset + 2] = trans & 0xff;
+                    data[offset + 3] = 0;
+                }
+                offset += 4;
+            }
+            else {
+                const validChars = Object.keys(Bitmaps.COLORS).join('');
+                throw new Error(`Invalid pixel char '${row[x]}'. `+
+                        `Valid chars are "${validChars}".`);
+            }
+        }
+    }
+    return { width, height, data };
+}
+
+exports.getFixturePath = function (filename) {
+    return Path.join(__dirname, "../fixtures", filename);
+}
+
+exports.getGifPath = function (filenameMinusExtension) {
+    return exports.getFixturePath(filenameMinusExtension + '.gif');
+}
