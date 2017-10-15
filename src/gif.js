@@ -8,7 +8,7 @@ class Gif {
     // height - height of GIF in pixels
     // loops - 0 = unending; (n > 0) = iterate n times
     // usesTransparency - whether any frames have transparent pixels
-    // storage - method of storing color palette (global or local)
+    // colorScope - scope of color tables in GIF
     // frames - array of frames
     // buffer - GIF-formatted data
 
@@ -17,15 +17,15 @@ class Gif {
         this.height = spec.height;
         this.loops = spec.loops;
         this.usesTransparency = spec.usesTransparency;
-        this.storage = spec.storage;
+        this.colorScope = spec.colorScope;
         this.frames = frames;
         this.buffer = buffer;
     }
 }
 
-Gif.StoreGlobalIfCan = 0;
-Gif.StoreGlobal = 1;
-Gif.StoreLocal = 2;
+Gif.GlobalColorsPreferred = 0;
+Gif.GlobalColorsOnly = 1;
+Gif.LocalColorsOnly = 2;
 
 class GifError extends ExtendableError {
 

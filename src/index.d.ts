@@ -9,8 +9,7 @@ interface GifSpec {
     height?: number;
     loops?: number;
     usesTransparency?: boolean;
-    colors?: number[];
-    storage?: 1|2|3;
+    colorScope?: 0|1|2;
 }
 
 interface GifEncoder {
@@ -23,9 +22,9 @@ interface GifDecoder {
 
 declare class Gif implements GifSpec {
 
-    static readonly StoreGlobalIfCan: 0;
-    static readonly StoreGlobal: 1;
-    static readonly StoreLocal: 2;
+    static readonly GlobalColorsPreferred: 0;
+    static readonly GlobalColorsOnly: 1;
+    static readonly LocalColorsOnly: 2;
 
     frames: Frame[];
     buffer: Buffer;
@@ -72,7 +71,6 @@ declare class GifFrame extends Jimp {
     constructor(frame: GifFrame);
     constructor(bitmap: BitmapSpec, options?: GifFrameOptions);
 
-    getPixelBuffer(): Buffer;
     makePalette(): GifPalette;
 }
 

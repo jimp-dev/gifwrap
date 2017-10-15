@@ -5,10 +5,12 @@ const Omggif = require('./omggif');
 const { Gif, GifError } = require('./gif');
 const { GifFrame } = require('./gifframe');
 
-const PER_GIF_OVERHEAD = 34; // est. bytes per GIF excluding palette & data
-const PER_FRAME_OVERHEAD = 23; // est. bytes per frame excluding palette & data
+const PER_GIF_OVERHEAD = 200; // these are guesses at upper limits
+const PER_FRAME_OVERHEAD = 100;
 
 // TBD: use buffer.writeUInt32BE() and buffer.readUInt32BE()
+
+// Note: I experimented with accepting a global color table when encoding and returning the global color table when decoding. Doing this properly greatly increased the complexity of the code and the amount of clock cycles required. The main issue is that each frame can specify any color of the global color table to be transparent within the frame, while this GIF library strives to hide GIF formatting details from its clients. E.g. it's possible to have 256 colors in the global color table and different transparencies in each frame, requiring clients to either provide per-frame transparency indexes, or for arcane reasons that won't be apparent to client developers, encode some GIFs with local color tables that previously decoded with global tables.
 
 class GifCodec {
 
@@ -94,13 +96,12 @@ class GifCodec {
                     `dimensions ${maxWidth} x ${maxHeight} `+
                     `(try not specifying GIF dimensions)`);
         }
-                
+        
         spec = Object.assign({}, spec); // clone to avoid munging caller's spec
         spec.width = maxWidth;
         spec.height = maxHeight;
         spec.loops = spec.loops || 0;
-        spec.storage = spec.storage || Gif.GlobalIfCan;
-        spec.usesTransparency = spec.usesTransparency || false;
+        spec.colorScope = spec.colorScope || Gif.GlobalColorsPreferred;
 
         return new Promise((resolve, reject) => {
 
@@ -219,8 +220,9 @@ function _encodeGif(frames, spec) {
                 `(try not specifying 'usesTransparency')`);
     }
 
-    let globalPaletteTree, indexSize;
-    if (spec.storage <= Gif.StoreGlobal) {
+    let globalIndexSize;
+    let globalPaletteTree;
+    if (spec.colorScope !== Gif.LocalColorsOnly) {
         globalPaletteTree = new RBTree((a, b) => (a - b));
         localPalettes.forEach(palette => {
 
@@ -231,37 +233,44 @@ function _encodeGif(frames, spec) {
                 }
             });
         });
-        indexSize = globalPaletteTree.size;
+        globalIndexSize = globalPaletteTree.size;
         if (usesTransparency) {
-            ++indexSize;
+            // odd that GIF requires a color table entry at transparent index
+            ++globalIndexSize;
         }
-        if (indexSize > 256 ) { // if global palette impossible
-            if (spec.storage === Gif.StoreGlobal) {
-                throw new GifError("Too many color indexes to store global");
+        if (globalIndexSize > 256 ) { // if global palette impossible
+            if (spec.colorScope === Gif.GlobalColorsOnly) {
+                throw new GifError(
+                        "Too many color indexes for global color table");
             }
-            spec.storage = Gif.StoreLocal
+            spec.colorScope = Gif.LocalColorsOnly
         }
     }
 
-    if (spec.storage === Gif.StoreLocal) {
+    if (spec.colorScope === Gif.LocalColorsOnly) {
         const localSizeEst = _getSizeEstimateLocal(localPalettes, frames);
         return _encodeLocal(frames, spec, localSizeEst, localPalettes,
                     loopCount);
     }
+    else {
+        const globalColors = Array(globalPaletteTree.size);
+        const iter = globalPaletteTree.iterator();
+        for (let i = 0; i < globalColors.length; ++i) {
+            globalColors[i] = iter.next();
+        }
+        const globalPalette = {
+            colors: globalColors,
+            indexSize: globalIndexSize,
+            usesTransparency: usesTransparency
+        };
+        const globalSizeEst = _getSizeEstimateGlobal(globalPalette, frames);
 
-    const colors = Array(globalPaletteTree.size);
-    const iter = globalPaletteTree.iterator();
-    for (let i = 0; i < colors.length; ++i) {
-        colors[i] = iter.next();
+        return _encodeGlobal(frames, spec, globalSizeEst, globalPalette,
+                    loopCount);
     }
-    const globalPalette = { colors, indexSize, usesTransparency };
-    const globalSizeEst = _getSizeEstimateGlobal(globalPalette, frames);
-
-    return _encodeGlobal(frames, spec, globalSizeEst, globalPalette, loopCount);
 }
 
 function _encodeGlobal(frames, spec, bufferSizeEst, globalPalette, loopCount) {
-    console.log("### GLOBAL");
     const buffer = new Buffer(bufferSizeEst);
     // would be inefficient for frames to lookup colors in extended palette 
     const extendedGlobalPalette = {
@@ -288,7 +297,6 @@ function _encodeGlobal(frames, spec, bufferSizeEst, globalPalette, loopCount) {
 }
 
 function _encodeLocal(frames, spec, bufferSizeEst, localPalettes, loopCount) {
-    console.log("### LOCAL");
     const buffer = new Buffer(bufferSizeEst);
     const options = {
         loop: loopCount
@@ -326,7 +334,7 @@ function _getFrameSizeEst(frame, pixelBitWidth) {
     byteLength = Math.ceil(byteLength * pixelBitWidth / 8);
     byteLength += Math.ceil(byteLength / 255); // add block size bytes
     // assume maximum palete size because it might get extended for power of 2
-    return (PER_FRAME_OVERHEAD + byteLength + 3 * 256);
+    return (PER_FRAME_OVERHEAD + byteLength + 3 * 256 /* largest palette */);
 }
 
 function _getIndexedImage(frameIndex, frame, palette) {
@@ -377,7 +385,7 @@ function _getPixelBitWidth(palette) {
 }
 
 function _getSizeEstimateGlobal(globalPalette, frames) {
-    let sizeEst = PER_GIF_OVERHEAD + globalPalette.indexSize * 3;
+    let sizeEst = PER_GIF_OVERHEAD + 3*256 /* max palette size*/;
     const pixelBitWidth = _getPixelBitWidth(globalPalette);
     frames.forEach(frame => {
         sizeEst += _getFrameSizeEst(frame, pixelBitWidth);

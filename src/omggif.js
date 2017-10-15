@@ -207,8 +207,10 @@ function GifWriter(buf, width, height, gopts) {
       buf[p++] = 0x3b;  // Trailer.
       ended = true;
     }
-    if (p > buf.length)
-      throw new Error("Buffer too small for encoding");
+    if (p > buf.length) {
+      throw new Error("Buffer is "+ (p - buf.length) +
+            " bytes too small for encoding");
+    }
     return p;
   };
 }

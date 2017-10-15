@@ -8,22 +8,22 @@ const path = require('path');
 const defaultCodec = new GifCodec();
 
 const name = 'singleFrameMultiTrans';
-_encodeDecodeFile(name, Gif.StoreLocal)
+_encodeDecodeFile(name, Gif.LocalColorsOnly)
 .catch(err => {
     console.log(err);
 });
 // .then(() => {
-//     return _encodeDecodeFile(name, Gif.StoreGlobal);
+//     return _encodeDecodeFile(name, Gif.GlobalColorsOnly);
 // });
 
-function _encodeDecodeFile(filename, storage) {
+function _encodeDecodeFile(filename, colorScope) {
     let expectedGif;
     return GifUtil.read(Tools.getGifPath(filename))
     .then(readGif => {
 
         expectedGif = readGif;
         const options = _getFrameOptions(readGif);
-        options.storage = storage;
+        options.colorScope = colorScope;
         return defaultCodec.encodeGif(readGif.frames, options);
     })
     .then(encodedGif => {
