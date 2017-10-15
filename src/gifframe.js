@@ -100,7 +100,7 @@ class GifFrame extends Jimp {
                 usesTransparency = true;
             }
             else {
-                color = (buf[i] << 16) + (buf[i + 1] << 8) + buf[i + 2];
+                color = (buf.readUInt32BE(i, true) >> 8) & 0xFFFFFF;
                 if (tree.find(color) === null) {
                     tree.insert(color);
                 }

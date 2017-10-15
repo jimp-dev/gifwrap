@@ -8,24 +8,18 @@ const { GifFrame } = require('./gifframe');
 const PER_GIF_OVERHEAD = 200; // these are guesses at upper limits
 const PER_FRAME_OVERHEAD = 100;
 
-// TBD: use buffer.writeUInt32BE() and buffer.readUInt32BE()
-
 // Note: I experimented with accepting a global color table when encoding and returning the global color table when decoding. Doing this properly greatly increased the complexity of the code and the amount of clock cycles required. The main issue is that each frame can specify any color of the global color table to be transparent within the frame, while this GIF library strives to hide GIF formatting details from its clients. E.g. it's possible to have 256 colors in the global color table and different transparencies in each frame, requiring clients to either provide per-frame transparency indexes, or for arcane reasons that won't be apparent to client developers, encode some GIFs with local color tables that previously decoded with global tables.
 
 class GifCodec {
 
-    // _transparentRGB - RGB given to transparent pixels (alpha=0) on decode, broken into RGB array; defaults to 0x000000, which is fastest
+    // _transparentRGBA - RGB given to transparent pixels (alpha=0) on decode; defaults to null indicating 0x000000, which is fastest
 
     constructor(options = {}) {
         this._transparentRGB = null; // 0x000000
         if (typeof options.transparentRGB === 'number' &&
                 options.transparentRGB !== 0)
         {
-            this._transparentRGB = [
-                (options.transparentRGB >> 16) & 0xff,
-                (options.transparentRGB >> 8) & 0xff,
-                options.transparentRGB & 0xff
-            ];
+            this._transparentRGBA = options.transparentRGB << 8;
         }
     }
 
@@ -128,7 +122,7 @@ class GifCodec {
         let usesTransparency = false;
         // this would be more efficient in the decoder than in the adapter
         // TBD: is there a way to iterate over 32-bit ints instead?
-        if (this._transparentRGB === null) {
+        if (this._transparentRGBA === null) {
             if (!alreadyUsedTransparency) {
                 for (let i = 3; i < buffer.length; i += 4) {
                     if (buffer[i] === 0) {
@@ -141,9 +135,7 @@ class GifCodec {
         else {
             for (let i = 3; i < buffer.length; i += 4) {
                 if (buffer[i] === 0) {
-                    buffer[i - 3] = this._transparentRGB[0];
-                    buffer[i - 2] = this._transparentRGB[1];
-                    buffer[i - 1] = this._transparentRGB[2];
+                    buffer.writeUInt32BE(this._transparentRGBA, i - 3);
                     usesTransparency = true; // GIF might encode unused index
                 }
             }
@@ -348,8 +340,7 @@ function _getIndexedImage(frameIndex, frame, palette) {
 
     while (i < colorBuffer.length) {
         if (colorBuffer[i + 3] === 255) {
-            const color = (colorBuffer[i] << 16) + (colorBuffer[i + 1] << 8) +
-                    colorBuffer[i + 2];
+            const color = (colorBuffer.readUInt32BE(i, true) >> 8) & 0xFFFFFF;
             // caller guarantees that the color will be in the palette
             indexBuffer[j] = colorToIndexFunc(colors, color);
         }
