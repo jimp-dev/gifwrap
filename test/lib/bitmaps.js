@@ -16,10 +16,21 @@ exports.COLORS = {
 
 exports.PREMADE = {
 
+    sampleSprite: [
+        ' *',
+        '* '
+    ],
+
     singleFrameMonoOpaque: [
         'RRR',
         'RRR',
         'RRR'
+    ],
+
+    singleFrameMonoOpaqueSpriteAt1x1: [
+        'RRR',
+        'RR*',
+        'R*R'
     ],
 
     singleFrameNoColorTrans: [

@@ -64,7 +64,7 @@ declare class GifFrame extends Jimp {
     delayHundreths: number;
     isInterlaced: boolean;
 
-    constructor(width: number, height: number, backgroundColor?: number, options?: GifFrameOptions);
+    constructor(width: number, height: number, backgroundRGBA?: number, options?: GifFrameOptions);
     constructor(width: number, height: number, buffer: Buffer, options?: GifFrameOptions);
     constructor(path: string, callback?: JimpCallback);
     constructor(image: Jimp);

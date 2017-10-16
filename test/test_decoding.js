@@ -1,6 +1,6 @@
 'use strict';
 
-const Assert = require('assert');
+const assert = require('chai').assert;
 const Jimp = require('jimp');
 const Tools = require('./lib/tools');
 const { Gif, GifFrame, GifCodec, GifUtil, GifError } = require('../src/index');
@@ -133,16 +133,16 @@ describe("multiframe decoding", () => {
         return GifUtil.read(Tools.getGifPath('nburling-public'))
         .then(gif => {
         
-            Assert.strictEqual(gif.width, 238);
-            Assert.strictEqual(gif.height, 372);
-            Assert.strictEqual(gif.loops, 0);
-            Assert.strictEqual(gif.usesTransparency, false);
-            Assert(Array.isArray(gif.frames));
-            Assert.strictEqual(gif.frames.length, 24);
+            assert.strictEqual(gif.width, 238);
+            assert.strictEqual(gif.height, 372);
+            assert.strictEqual(gif.loops, 0);
+            assert.strictEqual(gif.usesTransparency, false);
+            assert(Array.isArray(gif.frames));
+            assert.strictEqual(gif.frames.length, 24);
             for (let i = 0; i < gif.frames.length; ++i) {
                 const frame = gif.frames[i];
-                Assert.strictEqual(frame.bitmap.width, gif.width);
-                Assert.strictEqual(frame.bitmap.height, gif.height);
+                assert.strictEqual(frame.bitmap.width, gif.width);
+                assert.strictEqual(frame.bitmap.height, gif.height);
                 Tools.checkFrameDefaults(frame, {
                     xOffset: 0,
                     yOffset: 0,
@@ -150,7 +150,7 @@ describe("multiframe decoding", () => {
                     delayHundreths: 20
                 }, i);
             }
-            Assert(Buffer.isBuffer(gif.buffer)); 
+            assert(Buffer.isBuffer(gif.buffer)); 
         });
     });
 
@@ -159,11 +159,11 @@ describe("multiframe decoding", () => {
         return GifUtil.read(Tools.getGifPath('rnaples-offsets-public'))
         .then(gif => {
 
-            Assert.strictEqual(gif.width, 480);
-            Assert.strictEqual(gif.height, 693);
-            Assert.strictEqual(gif.loops, 0);
-            Assert.strictEqual(gif.usesTransparency, true);
-            const frameDump = [
+            assert.strictEqual(gif.width, 480);
+            assert.strictEqual(gif.height, 693);
+            assert.strictEqual(gif.loops, 0);
+            assert.strictEqual(gif.usesTransparency, true);
+            const frameDump = [ // generated via Tools.dumpFramesAsCode()
                 [0, 0, 480, 693, 10, false, 1],
                 [208, 405, 130, 111, 10, false, 1],
                 [85, 0, 395, 516, 10, false, 1],
@@ -197,36 +197,36 @@ describe("multiframe decoding", () => {
                 [208, 247, 215, 269, 10, false, 1]
             ];
             Tools.compareToFrameDump(gif.frames, frameDump);
-            Assert(Buffer.isBuffer(gif.buffer));
+            assert(Buffer.isBuffer(gif.buffer));
         });
     });
 });
 
 function _compareGifToSeries(actualGif, expectedSeries, options) {
 
-    Assert.strictEqual(actualGif.width, expectedSeries[0].width);
-    Assert.strictEqual(actualGif.height, expectedSeries[0].height);
+    assert.strictEqual(actualGif.width, expectedSeries[0].width);
+    assert.strictEqual(actualGif.height, expectedSeries[0].height);
     if (options.loops === undefined) {
-        Assert.strictEqual(actualGif.loops, 0);
+        assert.strictEqual(actualGif.loops, 0);
     }
     else {
-        Assert.strictEqual(actualGif.loops, options.loops);
+        assert.strictEqual(actualGif.loops, options.loops);
     }
     if (options.usesTransparency !== undefined) {
-        Assert.strictEqual(actualGif.usesTransparency,
+        assert.strictEqual(actualGif.usesTransparency,
                 options.usesTransparency);
     }
     if (options.optionization !== undefined) {
-        Assert.strictEqual(actualGif.optionization, options.optionization);
+        assert.strictEqual(actualGif.optionization, options.optionization);
     }
 
-    Assert(Array.isArray(actualGif.frames));
-    Assert.strictEqual(actualGif.frames.length, expectedSeries.length);
+    assert(Array.isArray(actualGif.frames));
+    assert.strictEqual(actualGif.frames.length, expectedSeries.length);
     for (let i = 0; i < actualGif.frames.length; ++i) {
         const f = actualGif.frames[i];
         Tools.checkFrameDefaults(f, options, i);
-        Assert.deepStrictEqual(f.bitmap, expectedSeries[i],
+        assert.deepStrictEqual(f.bitmap, expectedSeries[i],
                 `frame ${i} same bitmap`);
     }
-    Assert(Buffer.isBuffer(actualGif.buffer)); 
+    assert(Buffer.isBuffer(actualGif.buffer)); 
 }

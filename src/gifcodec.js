@@ -37,18 +37,8 @@ class GifCodec {
             const spec = {
                 width: reader.width,
                 height: reader.height,
-                decoder: this
+                loops: reader.loopCount()
             };
-
-            spec.loops = reader.loopCount();
-            if (Number.isInteger(spec.loops)) {
-                if (spec.loops > 0) {
-                    ++spec.loops;
-                }
-            }
-            else {
-                spec.loops = 1;
-            }
 
             spec.usesTransparency = false;
             for (let i = 0; i < frameCount; ++i) {
@@ -67,45 +57,42 @@ class GifCodec {
     }
 
     encodeGif(frames, spec = {}) {
-        if (frames === null || frames.length === 0) {
-            throw new GifError("there are no frames");
+        try {
+            if (frames === null || frames.length === 0) {
+                throw new GifError("there are no frames");
+            }
+            let maxWidth = 0, maxHeight = 0;
+            frames.forEach(frame => {
+                const width = frame.xOffset + frame.bitmap.width;
+                if (width > maxWidth) {
+                    maxWidth = width;
+                }
+                const height = frame.yOffset + frame.bitmap.height;
+                if (height > maxHeight) {
+                    maxHeight = height;
+                }
+            });
+
+            if (spec.width && spec.width !== maxWidth ||
+                    spec.height && spec.height !== maxHeight)
+            {
+                throw new GifError(`GIF dimensions `+
+                        `${spec.width} x ${spec.height} < largest frame `+
+                        `dimensions ${maxWidth} x ${maxHeight} `+
+                        `(try not specifying GIF dimensions)`);
+            }
+            
+            spec = Object.assign({}, spec); // don't munge caller's spec
+            spec.width = maxWidth;
+            spec.height = maxHeight;
+            spec.loops = spec.loops || 0;
+            spec.colorScope = spec.colorScope || Gif.GlobalColorsPreferred;
+
+            return Promise.resolve(_encodeGif(frames, spec));
         }
-        let maxWidth = 0, maxHeight = 0;
-        frames.forEach(frame => {
-            const width = frame.xOffset + frame.bitmap.width;
-            if (width > maxWidth) {
-                maxWidth = width;
-            }
-            const height = frame.yOffset + frame.bitmap.height;
-            if (height > maxHeight) {
-                maxHeight = height;
-            }
-        });
-
-        if (spec.width && spec.width !== maxWidth ||
-                spec.height && spec.height !== maxHeight)
-        {
-            throw new GifError(`GIF dimensions `+
-                    `${spec.width} x ${spec.height} != max frame `+
-                    `dimensions ${maxWidth} x ${maxHeight} `+
-                    `(try not specifying GIF dimensions)`);
+        catch (err) {
+            return Promise.reject(err);
         }
-        
-        spec = Object.assign({}, spec); // clone to avoid munging caller's spec
-        spec.width = maxWidth;
-        spec.height = maxHeight;
-        spec.loops = spec.loops || 0;
-        spec.colorScope = spec.colorScope || Gif.GlobalColorsPreferred;
-
-        return new Promise((resolve, reject) => {
-
-            try {
-                resolve(_encodeGif(frames, spec));
-            }
-            catch (err) {
-                reject(err);
-            }
-        });
     }
 
     _decodeFrame(reader, frameIndex, alreadyUsedTransparency) {
@@ -120,8 +107,6 @@ class GifCodec {
         }
 
         let usesTransparency = false;
-        // this would be more efficient in the decoder than in the adapter
-        // TBD: is there a way to iterate over 32-bit ints instead?
         if (this._transparentRGBA === null) {
             if (!alreadyUsedTransparency) {
                 for (let i = 3; i < buffer.length; i += 4) {
@@ -178,16 +163,6 @@ function _colorLookupBinary(colors, color) {
 }
 
 function _encodeGif(frames, spec) {
-    let loopCount = spec.loops;
-    if (loopCount > 0) {
-        if (loopCount === 1) {
-            loopCount = null;
-        }
-        else {
-            --loopCount;
-        }
-    }
-
     let usesTransparency = false;
     const localPalettes = [];
     for (let i = 0; i < frames.length; ++i) {
@@ -241,8 +216,7 @@ function _encodeGif(frames, spec) {
 
     if (spec.colorScope === Gif.LocalColorsOnly) {
         const localSizeEst = _getSizeEstimateLocal(localPalettes, frames);
-        return _encodeLocal(frames, spec, localSizeEst, localPalettes,
-                    loopCount);
+        return _encodeLocal(frames, spec, localSizeEst, localPalettes);
     }
     else {
         const globalColors = Array(globalPaletteTree.size);
@@ -257,12 +231,11 @@ function _encodeGif(frames, spec) {
         };
         const globalSizeEst = _getSizeEstimateGlobal(globalPalette, frames);
 
-        return _encodeGlobal(frames, spec, globalSizeEst, globalPalette,
-                    loopCount);
+        return _encodeGlobal(frames, spec, globalSizeEst, globalPalette);
     }
 }
 
-function _encodeGlobal(frames, spec, bufferSizeEst, globalPalette, loopCount) {
+function _encodeGlobal(frames, spec, bufferSizeEst, globalPalette) {
     const buffer = new Buffer(bufferSizeEst);
     // would be inefficient for frames to lookup colors in extended palette 
     const extendedGlobalPalette = {
@@ -272,7 +245,7 @@ function _encodeGlobal(frames, spec, bufferSizeEst, globalPalette, loopCount) {
     _extendPaletteToPowerOf2(extendedGlobalPalette);
     const options = {
         palette: extendedGlobalPalette.colors,
-        loop: loopCount
+        loop: spec.loops
     };
     let gifWriter;
     try {
@@ -288,10 +261,10 @@ function _encodeGlobal(frames, spec, bufferSizeEst, globalPalette, loopCount) {
     return new Gif(buffer.slice(0, gifWriter.end()), frames, spec);
 }
 
-function _encodeLocal(frames, spec, bufferSizeEst, localPalettes, loopCount) {
+function _encodeLocal(frames, spec, bufferSizeEst, localPalettes) {
     const buffer = new Buffer(bufferSizeEst);
     const options = {
-        loop: loopCount
+        loop: spec.loops
     };
     let gifWriter;
     try {

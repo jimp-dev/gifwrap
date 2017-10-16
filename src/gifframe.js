@@ -130,7 +130,7 @@ function _throwBadConstructor() {
 /*
 The current release of Jimp (0.2.28) does not make this available.
 
-Jimp.appendConstructorOption('gifwrap-frame', (...args) => {
+Jimp.appendConstructorOption('mauvie-frame', (...args) => {
 
     return (args.length === 0);
 }, jimpFrameConstructor);

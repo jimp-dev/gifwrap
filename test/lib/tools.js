@@ -1,6 +1,6 @@
 'use strict';
 
-const Assert = require('assert');
+const assert = require('chai').assert;
 const Path = require('path');
 const Bitmaps = require('./bitmaps');
 const { GifFrame } = require('../../src/gifframe');
@@ -14,11 +14,11 @@ exports.checkFrameDefaults = function (actualInfo, options, frameIndex = 0) {
     options.disposalMethod =
             (options.disposalMethod || GifFrame.DisposeToAnything);
     exports.verifyFrameInfo(actualInfo, options, frameIndex);
-}
+};
 
 exports.compareToFrameDump = function (actualFrames, expectedDump) {
-    Assert.ok(Array.isArray(actualFrames));
-    Assert.strictEqual(actualFrames.length, expectedDump.length);
+    assert(Array.isArray(actualFrames));
+    assert.strictEqual(actualFrames.length, expectedDump.length);
     for (let i = 0; i < actualFrames.length; ++i) {
         const actualFrame = actualFrames[i];
         const dump = expectedDump[i];
@@ -34,7 +34,7 @@ exports.compareToFrameDump = function (actualFrames, expectedDump) {
             disposalMethod: dump[6]
         }, i);
     }
-}
+};
 
 exports.dumpFramesAsCode = function (frames) {
     let first = true;
@@ -49,7 +49,7 @@ exports.dumpFramesAsCode = function (frames) {
         first = false;
     });
     process.stdout.write("\n]\n");
-}
+};
 
 exports.getBitmap = function (bitmapName, transparentRGB) {
     const stringPic = Bitmaps.PREMADE[bitmapName];
@@ -60,7 +60,23 @@ exports.getBitmap = function (bitmapName, transparentRGB) {
         throw new Error(`'${bitmapName}' is a bitmap series`);
     }
     return _stringsToBitmap(stringPic, transparentRGB);
-}
+};
+
+exports.getFixturePath = function (filename) {
+    return Path.join(__dirname, "../fixtures", filename);
+};
+
+exports.getGifPath = function (filenameMinusExtension) {
+    return exports.getFixturePath(filenameMinusExtension + '.gif');
+};
+
+exports.getGifSpec = function (gif) {
+    const options = Object.assign({}, gif);
+    // clear for confidence that these aren't affecting the test results
+    options.frames = undefined; 
+    options.buffer = undefined;
+    return options;
+};
 
 exports.getSeries = function (seriesName, transparentRGB) {
     const series = Bitmaps.PREMADE[seriesName];
@@ -72,35 +88,35 @@ exports.getSeries = function (seriesName, transparentRGB) {
     }
     return series.map(stringPic =>
             (_stringsToBitmap(stringPic, transparentRGB)));
-}
+};
 
 exports.verifyFrameInfo = function (actual, expected, frameIndex=0, note='') {
     expected = Object.assign({}, expected); // don't munge caller
     if (expected.xOffset !== undefined) {
-        Assert.strictEqual(actual.xOffset, expected.xOffset,
+        assert.strictEqual(actual.xOffset, expected.xOffset,
                 `frame ${frameIndex} same x offset${note}`);
     }
     if (expected.yOffset !== undefined) {
-        Assert.strictEqual(actual.yOffset, expected.yOffset,
+        assert.strictEqual(actual.yOffset, expected.yOffset,
                 `frame ${frameIndex} same y offset${note}`);
     }
     if (expected.bitmap !== undefined) {
-        Assert.strictEqual(actual.bitmap.width, expected.bitmap.width,
+        assert.strictEqual(actual.bitmap.width, expected.bitmap.width,
                 `frame ${frameIndex} same width${note}`);
-        Assert.strictEqual(actual.bitmap.height, expected.bitmap.height,
+        assert.strictEqual(actual.bitmap.height, expected.bitmap.height,
                 `frame ${frameIndex} same height${note}`);
     }
     if (expected.delayHundreths !== undefined) {
-        Assert.strictEqual(actual.delayHundreths, expected.delayHundreths,
+        assert.strictEqual(actual.delayHundreths, expected.delayHundreths,
                 `frame ${frameIndex} same delay${note}`);
     }
     if (expected.disposalMethod !== undefined) {
-        Assert.strictEqual(actual.disposalMethod, expected.disposalMethod,
+        assert.strictEqual(actual.disposalMethod, expected.disposalMethod,
                 `frame ${frameIndex} same disposal method${note}`);
     }
-    Assert.strictEqual(actual.interlaced, (expected.interlaced === true),
+    assert.strictEqual(actual.interlaced, (expected.interlaced === true),
             `frame ${frameIndex} same interlacing${note}`);
-}
+};
 
 function _stringsToBitmap(stringPic, transparentRGB) {
     const trans = transparentRGB; // shortens code, leaves parameter clear
@@ -141,12 +157,4 @@ function _stringsToBitmap(stringPic, transparentRGB) {
         }
     }
     return { width, height, data };
-}
-
-exports.getFixturePath = function (filename) {
-    return Path.join(__dirname, "../fixtures", filename);
-}
-
-exports.getGifPath = function (filenameMinusExtension) {
-    return exports.getFixturePath(filenameMinusExtension + '.gif');
 }

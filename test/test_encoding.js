@@ -1,6 +1,6 @@
 'use strict';
 
-const Assert = require('assert');
+const assert = require('chai').assert;
 const Tools = require('./lib/tools');
 const { Gif, GifFrame, GifCodec, GifUtil, GifError } = require('../src/index');
 
@@ -116,13 +116,12 @@ describe("encoding GlobalColorsPreferred", () => {
         return defaultCodec.encodeGif(frames, options)
         .then(encodedGif => {
 
-            Assert.ok(true);
             options.colorScope = Gif.GlobalColorsOnly;
             return defaultCodec.encodeGif(frames, options);
         })
         .then(encodedGif => {
 
-            Assert.ok(true);
+            assert(true);
         })
     });
 
@@ -137,13 +136,12 @@ describe("encoding GlobalColorsPreferred", () => {
         return defaultCodec.encodeGif(frames, options)
         .then(encodedGif => {
 
-            Assert.ok(true);
             options.colorScope = Gif.GlobalColorsOnly;
             return defaultCodec.encodeGif(frames, options);
         })
         .then(encodedGif => {
 
-            Assert.ok(true);
+            assert(true);
         })
     });
 
@@ -160,13 +158,12 @@ describe("encoding GlobalColorsPreferred", () => {
         return defaultCodec.encodeGif(frames, options)
         .then(encodedGif => {
 
-            Assert.ok(true);
             options.colorScope = Gif.GlobalColorsOnly;
             return defaultCodec.encodeGif(frames, options);
         })
         .then(encodedGif => {
 
-            Assert.ok(true);
+            assert(true);
         })
     });
 
@@ -184,20 +181,19 @@ describe("encoding GlobalColorsPreferred", () => {
         return defaultCodec.encodeGif(frames, options)
         .then(encodedGif => {
 
-            Assert.ok(true);
             options.colorScope = Gif.GlobalColorsOnly;
             return defaultCodec.encodeGif(frames, options);
         })
         .then(encodedGif => {
 
-            Assert.ok(false, "should not encode");
+            assert.fail("should not encode");
         })
         .catch(err => {
 
             if (!(err instanceof GifError)) {
                 throw err;
             }
-            Assert.strictEqual(err.message,
+            assert.strictEqual(err.message,
                     "Too many color indexes for global color table");
         });
     });
@@ -214,20 +210,19 @@ describe("encoding GlobalColorsPreferred", () => {
         return defaultCodec.encodeGif(frames, options)
         .then(encodedGif => {
 
-            Assert.ok(true);
             options.colorScope = Gif.GlobalColorsOnly;
             return defaultCodec.encodeGif(frames, options);
         })
         .then(encodedGif => {
 
-            Assert.ok(false, "should not encode");
+            assert.fail("should not encode");
         })
         .catch(err => {
 
             if (!(err instanceof GifError)) {
                 throw err;
             }
-            Assert.strictEqual(err.message,
+            assert.strictEqual(err.message,
                     "Too many color indexes for global color table");
         });
     });
@@ -236,18 +231,15 @@ describe("encoding GlobalColorsPreferred", () => {
 
 function _compareGifs(actual, expected, filename, note) {
     note = `file '${filename}' (${note})`;
-    Assert.strictEqual(actual.width, expected.width, note);
-    Assert.strictEqual(actual.height, expected.height, note);
-    Assert.strictEqual(actual.loops, expected.loops, note);
-    Assert.strictEqual(actual.usesTransparency, expected.usesTransparency,
+    assert.strictEqual(actual.width, expected.width, note);
+    assert.strictEqual(actual.height, expected.height, note);
+    assert.strictEqual(actual.loops, expected.loops, note);
+    assert.strictEqual(actual.usesTransparency, expected.usesTransparency,
             note);
-    if (expected.optionization !== undefined) {
-        Assert.strictEqual(actual.optionization, expected.optionization, note);
-    }
 
-    Assert(Buffer.isBuffer(actual.buffer), note); 
-    Assert(Array.isArray(actual.frames));
-    Assert.strictEqual(actual.frames.length, expected.frames.length);
+    assert(Buffer.isBuffer(actual.buffer), note); 
+    assert(Array.isArray(actual.frames));
+    assert.strictEqual(actual.frames.length, expected.frames.length);
     note = ` in ${note}`;
     for (let i = 0; i < actual.frames.length; ++i) {
         const actualFrame = actual.frames[i];
@@ -262,9 +254,9 @@ function _encodeDecodeFile(filename, colorScope) {
     .then(readGif => {
 
         expectedGif = readGif;
-        const options = _getFrameOptions(readGif);
-        options.colorScope = colorScope;
-        return defaultCodec.encodeGif(readGif.frames, options);
+        const spec = Tools.getGifSpec(readGif);
+        spec.colorScope = colorScope;
+        return defaultCodec.encodeGif(readGif.frames, spec);
     })
     .then(encodedGif => {
 
@@ -287,11 +279,4 @@ function _get256ColorFrame() {
         buf[offset + 3] = 255;
     }
     return new GifFrame(16, 16, buf);
-}
-
-function _getFrameOptions(frame) {
-    const options = Object.assign({}, frame);
-    options.frames = undefined;
-    options.buffer = undefined;
-    return options;
 }
