@@ -2,13 +2,14 @@
 
 const Jimp = require('jimp');
 const RBTree = require('bintrees').RBTree;
+const { GifError } = require('./gif');
 
 class GifFrame extends Jimp {
 
     // xOffset - x offset of bitmap on GIF (defaults to 0)
     // yOffset - y offset of bitmap on GIF (defaults to 0)
     // disposalMethod - pixel disposal method when handling partial images
-    // delayHundreths - duration of frame in hundreths of a second
+    // delayCentisecs - duration of frame in hundredths of a second
     // interlaced - whether the image is interlaced (defaults to false)
 
     constructor(...args) {
@@ -18,7 +19,7 @@ class GifFrame extends Jimp {
             this.xOffset = sourceFrame.xOffset;
             this.yOffset = sourceFrame.yOffset;
             this.disposalMethod = sourceFrame.disposalMethod;
-            this.delayHundreths = sourceFrame.delayHundreths;
+            this.delayCentisecs = sourceFrame.delayCentisecs;
             this.interlaced = sourceFrame.interlaced;
         }
         else {
@@ -83,12 +84,12 @@ class GifFrame extends Jimp {
             this.xOffset = options.xOffset || 0;
             this.yOffset = options.yOffset || 0;
             this.disposalMethod = options.disposalMethod || 0;
-            this.delayHundreths = options.delayHundreths || 8;
+            this.delayCentisecs = options.delayCentisecs || 8;
             this.interlaced = options.interlaced || false;
         }
     }
     
-    makePalette() {
+    getPalette() {
         // returns palette with colors sorted low to high
         const tree = new RBTree((a, b) => (a - b));
         const buf = this.bitmap.data;
@@ -112,7 +113,37 @@ class GifFrame extends Jimp {
         for (i = 0; i < colors.length; ++i) {
             colors[i] = iter.next();
         }
-        return { colors, usesTransparency };
+        let indexCount = colors.length;
+        if (usesTransparency) {
+            ++indexCount;
+        }
+        return { colors, usesTransparency, indexCount };
+    }
+
+    reframe(xOffset, yOffset, width, height, fillRGBA) {
+        const cropX = (xOffset < 0 ? 0 : xOffset);
+        const cropY = (yOffset < 0 ? 0 : yOffset);
+        const cropWidth = (width + cropX > this.bitmap.width ?
+                this.bitmap.width - cropX : width);
+        const cropHeight = (height + cropY > this.bitmap.height ?
+                this.bitmap.height - cropY : height);
+        const newX = (xOffset < 0 ? -xOffset : 0);
+        const newY = (yOffset < 0 ? -yOffset : 0);
+
+        let image;
+        if (fillRGBA === undefined) {
+            if (cropX !== xOffset || cropY != yOffset ||
+                    cropWidth !== width || cropHeight !== height)
+            {
+                throw new GifError(`fillRGBA required for this reframing`);
+            }
+            image = new Jimp(width, height);
+        }
+        else {
+            image = new Jimp(width, height, fillRGBA);
+        }
+        image.blit(this, newX, newY, cropX, cropY, cropWidth, cropHeight);
+        this.bitmap = image.bitmap;
     }
 }
 
@@ -130,7 +161,7 @@ function _throwBadConstructor() {
 /*
 The current release of Jimp (0.2.28) does not make this available.
 
-Jimp.appendConstructorOption('mauvie-frame', (...args) => {
+Jimp.appendConstructorOption('gifwrap-frame', (...args) => {
 
     return (args.length === 0);
 }, jimpFrameConstructor);

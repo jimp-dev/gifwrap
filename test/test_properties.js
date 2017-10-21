@@ -2,7 +2,7 @@
 
 const assert = require('chai').assert;
 const Tools = require('./lib/tools');
-const { Gif, GifFrame, GifCodec, GifUtil, GifError } = require('../src/index');
+const { Gif, GifFrame, GifCodec, GifError, GifUtil } = require('../src/index');
 
 const defaultCodec = new GifCodec();
 
@@ -80,7 +80,7 @@ describe("Gif width/height", () => {
             if (!(err instanceof GifError)) {
                 throw err;
             }
-            assert.match(err.message, /< largest frame/);
+            assert.match(err.message, /≠ largest output/);
         });
     });
 
@@ -102,7 +102,7 @@ describe("Gif width/height", () => {
             if (!(err instanceof GifError)) {
                 throw err;
             }
-            assert.match(err.message, /< largest frame/);
+            assert.match(err.message, /≠ largest output/);
         });
     });
 
@@ -124,7 +124,7 @@ describe("Gif width/height", () => {
             if (!(err instanceof GifError)) {
                 throw err;
             }
-            assert.match(err.message, /< largest frame/);
+            assert.match(err.message, /≠ largest output/);
         });
     });
 
@@ -146,7 +146,7 @@ describe("Gif width/height", () => {
             if (!(err instanceof GifError)) {
                 throw err;
             }
-            assert.match(err.message, /< largest frame/);
+            assert.match(err.message, /≠ largest output/);
         });
     });
 });
@@ -318,7 +318,7 @@ describe("GifFrame delay", () => {
 
             readGif.frames.forEach(frame => {
 
-                assert.strictEqual(frame.delayHundreths, 33);
+                assert.strictEqual(frame.delayCentisecs, 33);
             });
         });
     });
@@ -330,7 +330,7 @@ describe("GifFrame delay", () => {
 
             const frames = readGif.frames;
             for (let i = 0; i < frames.length; ++i) {
-                assert.strictEqual(frames[i].delayHundreths, (i + 1)*25);
+                assert.strictEqual(frames[i].delayCentisecs, (i + 1)*25);
             }
         });
     });
@@ -342,7 +342,7 @@ describe("GifFrame delay", () => {
         
             const frames = readGif.frames;
             for (let i = 0; i < frames.length; ++i) {
-                frames[i].delayHundreths = (i + 1)*25;
+                frames[i].delayCentisecs = (i + 1)*25;
             }
             const spec = Tools.getGifSpec(readGif);
             return defaultCodec.encodeGif(frames, spec);
@@ -355,7 +355,7 @@ describe("GifFrame delay", () => {
 
             const frames = decodedGif.frames;
             for (let i = 0; i < frames.length; ++i) {
-                assert.strictEqual(frames[i].delayHundreths, (i + 1)*25);
+                assert.strictEqual(frames[i].delayCentisecs, (i + 1)*25);
             }
         });
     });

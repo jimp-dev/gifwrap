@@ -9,7 +9,7 @@ exports.checkFrameDefaults = function (actualInfo, options, frameIndex = 0) {
     options = Object.assign({}, options); // don't munge caller
     options.xOffset = options.xOffset || 0;
     options.yOffset = options.yOffset || 0;
-    options.delayHundreths = options.delayHundreths || 8;
+    options.delayCentisecs = options.delayCentisecs || 8;
     options.interlaced = (options.interlaced === true);
     options.disposalMethod =
             (options.disposalMethod || GifFrame.DisposeToAnything);
@@ -29,7 +29,7 @@ exports.compareToFrameDump = function (actualFrames, expectedDump) {
                 width: dump[2],
                 height: dump[3]
             },
-            delayHundreths: dump[4],
+            delayCentisecs: dump[4],
             interlaced: dump[5],
             disposalMethod: dump[6]
         }, i);
@@ -45,7 +45,7 @@ exports.dumpFramesAsCode = function (frames) {
         }
         process.stdout.write(`    [${f.xOffset}, ${f.yOffset}, `+
                 `${f.bitmap.width}, ${f.bitmap.height}, `+
-                `${f.delayHundreths}, ${f.interlaced}, ${f.disposalMethod}]`);
+                `${f.delayCentisecs}, ${f.interlaced}, ${f.disposalMethod}]`);
         first = false;
     });
     process.stdout.write("\n]\n");
@@ -106,8 +106,8 @@ exports.verifyFrameInfo = function (actual, expected, frameIndex=0, note='') {
         assert.strictEqual(actual.bitmap.height, expected.bitmap.height,
                 `frame ${frameIndex} same height${note}`);
     }
-    if (expected.delayHundreths !== undefined) {
-        assert.strictEqual(actual.delayHundreths, expected.delayHundreths,
+    if (expected.delayCentisecs !== undefined) {
+        assert.strictEqual(actual.delayCentisecs, expected.delayCentisecs,
                 `frame ${frameIndex} same delay${note}`);
     }
     if (expected.disposalMethod !== undefined) {

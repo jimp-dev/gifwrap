@@ -3,6 +3,11 @@
 const RBTree = require('bintrees').RBTree;
 const Omggif = require('./omggif');
 const { Gif, GifError } = require('./gif');
+let GifUtil; // allow circular dependency with GifUtil
+process.nextTick(() => {
+    GifUtil = require('./gifutil').GifUtil
+});
+
 const { GifFrame } = require('./gifframe');
 
 const PER_GIF_OVERHEAD = 200; // these are guesses at upper limits
@@ -10,8 +15,8 @@ const PER_FRAME_OVERHEAD = 100;
 
 // Note: I experimented with accepting a global color table when encoding and returning the global color table when decoding. Doing this properly greatly increased the complexity of the code and the amount of clock cycles required. The main issue is that each frame can specify any color of the global color table to be transparent within the frame, while this GIF library strives to hide GIF formatting details from its clients. E.g. it's possible to have 256 colors in the global color table and different transparencies in each frame, requiring clients to either provide per-frame transparency indexes, or for arcane reasons that won't be apparent to client developers, encode some GIFs with local color tables that previously decoded with global tables.
 
-class GifCodec {
-
+class GifCodec
+{
     // _transparentRGBA - RGB given to transparent pixels (alpha=0) on decode; defaults to null indicating 0x000000, which is fastest
 
     constructor(options = {}) {
@@ -19,7 +24,7 @@ class GifCodec {
         if (typeof options.transparentRGB === 'number' &&
                 options.transparentRGB !== 0)
         {
-            this._transparentRGBA = options.transparentRGB << 8;
+            this._transparentRGBA = options.transparentRGB * 256;
         }
     }
 
@@ -76,8 +81,8 @@ class GifCodec {
             if (spec.width && spec.width !== maxWidth ||
                     spec.height && spec.height !== maxHeight)
             {
-                throw new GifError(`GIF dimensions `+
-                        `${spec.width} x ${spec.height} < largest frame `+
+                throw new GifError(`Specified GIF dimensions `+
+                        `${spec.width} x ${spec.height} ≠ largest output `+
                         `dimensions ${maxWidth} x ${maxHeight} `+
                         `(try not specifying GIF dimensions)`);
             }
@@ -131,7 +136,7 @@ class GifCodec {
             yOffset: info.y,
             disposalMethod: info.disposal,
             interlaced: info.interlaced,
-            delayHundreths: info.delay
+            delayCentisecs: info.delay
         });
         return { frame, usesTransparency };
     }
@@ -163,49 +168,13 @@ function _colorLookupBinary(colors, color) {
 }
 
 function _encodeGif(frames, spec) {
-    let usesTransparency = false;
-    const localPalettes = [];
-    for (let i = 0; i < frames.length; ++i) {
-        let palette = frames[i].makePalette();
-        palette.indexSize = palette.colors.length;
-        if (palette.usesTransparency) {
-            ++palette.indexSize;
-            usesTransparency = true;
-        }
-        if (palette.indexSize > 256) {
-            throw new GifError(`Frame {$i} uses more than 256 color indexes`);
-        }
-        localPalettes.push(palette);
+    let colorInfo;
+    if (spec.colorScope === Gif.LocalColorsOnly) {
+        colorInfo = GifUtil.getColorInfo(frames, 0);
     }
-    if (spec.usesTransparency !== undefined && spec.usesTransparency != null &&
-            usesTransparency !== spec.usesTransparency)
-    {
-        const specSays = (spec.usesTransparency ? 'uses' : 'does not use');
-        const gifSays = (usesTransparency ? 'uses' : 'does not use');
-        throw new GifError(`Gif spec asserts that GIF ${specSays} `+
-                `transparency, but the GIF actually ${gifSays} it `+
-                `(try not specifying 'usesTransparency')`);
-    }
-
-    let globalIndexSize;
-    let globalPaletteTree;
-    if (spec.colorScope !== Gif.LocalColorsOnly) {
-        globalPaletteTree = new RBTree((a, b) => (a - b));
-        localPalettes.forEach(palette => {
-
-            palette.colors.forEach(color => {
-
-                if (!globalPaletteTree.find(color)) {
-                    globalPaletteTree.insert(color);
-                }
-            });
-        });
-        globalIndexSize = globalPaletteTree.size;
-        if (usesTransparency) {
-            // odd that GIF requires a color table entry at transparent index
-            ++globalIndexSize;
-        }
-        if (globalIndexSize > 256 ) { // if global palette impossible
+    else {
+        colorInfo = GifUtil.getColorInfo(frames, 256);
+        if (!colorInfo.colors) { // if global palette impossible
             if (spec.colorScope === Gif.GlobalColorsOnly) {
                 throw new GifError(
                         "Too many color indexes for global color table");
@@ -214,25 +183,24 @@ function _encodeGif(frames, spec) {
         }
     }
 
+    if (spec.usesTransparency !== undefined && spec.usesTransparency != null &&
+            colorInfo.usesTransparency !== spec.usesTransparency)
+    {
+        const specSays = (spec.usesTransparency ? 'uses' : 'does not use');
+        const gifSays = (colorInfo.usesTransparency ? 'uses' : 'does not use');
+        throw new GifError(`Gif spec asserts that GIF ${specSays} `+
+                `transparency, but the GIF actually ${gifSays} it `+
+                `(try not specifying 'usesTransparency')`);
+    }
+
+    const localPalettes = colorInfo.palettes;
     if (spec.colorScope === Gif.LocalColorsOnly) {
         const localSizeEst = _getSizeEstimateLocal(localPalettes, frames);
         return _encodeLocal(frames, spec, localSizeEst, localPalettes);
     }
-    else {
-        const globalColors = Array(globalPaletteTree.size);
-        const iter = globalPaletteTree.iterator();
-        for (let i = 0; i < globalColors.length; ++i) {
-            globalColors[i] = iter.next();
-        }
-        const globalPalette = {
-            colors: globalColors,
-            indexSize: globalIndexSize,
-            usesTransparency: usesTransparency
-        };
-        const globalSizeEst = _getSizeEstimateGlobal(globalPalette, frames);
 
-        return _encodeGlobal(frames, spec, globalSizeEst, globalPalette);
-    }
+    const globalSizeEst = _getSizeEstimateGlobal(colorInfo, frames);
+    return _encodeGlobal(frames, spec, globalSizeEst, colorInfo);
 }
 
 function _encodeGlobal(frames, spec, bufferSizeEst, globalPalette) {
@@ -338,12 +306,12 @@ function _getIndexedImage(frameIndex, frame, palette) {
 }
 
 function _getPixelBitWidth(palette) {
-    let indexSize = palette.indexSize;
+    let indexCount = palette.indexCount;
     let pixelBitWidth = 0;
-    --indexSize; // start at maximum index
-    while (indexSize) {
+    --indexCount; // start at maximum index
+    while (indexCount) {
         ++pixelBitWidth;
-        indexSize >>= 1;
+        indexCount >>= 1;
     }
     return (pixelBitWidth > 0 ? pixelBitWidth : 1);
 }
@@ -373,7 +341,7 @@ function _writeFrame(gifWriter, frameIndex, frame, palette, isLocalPalette) {
     }
     const frameInfo = _getIndexedImage(frameIndex, frame, palette);
     const options = {
-        delay: frame.delayHundreths,
+        delay: frame.delayCentisecs,
         disposal: frame.disposalMethod,
         transparent: frameInfo.transparentIndex
     };

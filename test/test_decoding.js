@@ -3,7 +3,8 @@
 const assert = require('chai').assert;
 const Jimp = require('jimp');
 const Tools = require('./lib/tools');
-const { Gif, GifFrame, GifCodec, GifUtil, GifError } = require('../src/index');
+const { Gif, GifFrame, GifCodec, GifUtil, GifError } =
+        require('../src/index');
 
 describe("single frame decoding", () => {
 
@@ -82,10 +83,8 @@ describe("single frame decoding", () => {
         const transRGB = 0x123456;
         const name = 'singleFrameMultiTrans';
         const bitmap = Tools.getBitmap(name, transRGB);
-        const gifUtil = GifUtil.create({
-            decoder: new GifCodec({ transparentRGB: transRGB })
-        });
-        return gifUtil.read(Tools.getGifPath(name))
+        const decoder = new GifCodec({ transparentRGB: transRGB });
+        return GifUtil.read(Tools.getGifPath(name), decoder)
         .then(gif => {
 
             _compareGifToSeries(gif, [bitmap], {
@@ -108,7 +107,7 @@ describe("multiframe decoding", () => {
             _compareGifToSeries(gif, series, {
                 disposalMethod: GifFrame.DisposeToBackgroundColor,
                 usesTransparency: false,
-                delayHundreths: 50
+                delayCentisecs: 50
             });
         });
     });
@@ -123,7 +122,7 @@ describe("multiframe decoding", () => {
             _compareGifToSeries(gif, series, {
                 disposalMethod: GifFrame.DisposeToBackgroundColor,
                 usesTransparency: true,
-                delayHundreths: 25
+                delayCentisecs: 25
             });
         });
     });
@@ -147,7 +146,7 @@ describe("multiframe decoding", () => {
                     xOffset: 0,
                     yOffset: 0,
                     disposalMethod: GifFrame.DisposeNothing,
-                    delayHundreths: 20
+                    delayCentisecs: 20
                 }, i);
             }
             assert(Buffer.isBuffer(gif.buffer)); 

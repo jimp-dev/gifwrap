@@ -80,11 +80,11 @@ describe("GifFrame good construction behavior", () => {
     it("initializes options in an empty uncolored bitmap w/ options", (done) => {
 
         const color = 0x01020304;
-        const f = new GifFrame(10, 5, { delayHundreths: 100 });
+        const f = new GifFrame(10, 5, { delayCentisecs: 100 });
         assert.strictEqual(f.bitmap.width, 10);
         assert.strictEqual(f.bitmap.height, 5);
         Tools.checkFrameDefaults(f, {
-            delayHundreths: 100
+            delayCentisecs: 100
         });
         done();
     });
@@ -124,10 +124,10 @@ describe("GifFrame good construction behavior", () => {
     it("initializes data params with options", (done) => {
         const bitmap = Tools.getBitmap('singleFrameBWOpaque');
         const f = new GifFrame(bitmap.width, bitmap.height, bitmap.data,
-                    { delayHundreths: 200, interlaced: true });
+                    { delayCentisecs: 200, interlaced: true });
         assert.deepStrictEqual(f.bitmap, bitmap);
         Tools.checkFrameDefaults(f, {
-            delayHundreths: 200,
+            delayCentisecs: 200,
             interlaced: true
         });
         done();
@@ -144,10 +144,10 @@ describe("GifFrame good construction behavior", () => {
     it("initializes bitmap with options", (done) => {
         const bitmap = Tools.getBitmap('singleFrameBWOpaque');
         const f = new GifFrame(bitmap,
-                    { delayHundreths: 200, interlaced: true });
+                    { delayCentisecs: 200, interlaced: true });
         assert.deepStrictEqual(f.bitmap, bitmap);
         Tools.checkFrameDefaults(f, {
-            delayHundreths: 200,
+            delayCentisecs: 200,
             interlaced: true
         });
         done();
@@ -156,7 +156,7 @@ describe("GifFrame good construction behavior", () => {
     it("clones an existing frame", (done) => {
 
         const f1 = new GifFrame(5, 5, {
-            delayHundreths: 100,
+            delayCentisecs: 100,
             isInterlace: true
         });
         f1.bitmap = Tools.getBitmap('singleFrameBWOpaque');
@@ -263,7 +263,7 @@ describe("GifFrame palette", () => {
 
         const bitmap = Tools.getBitmap('singleFrameMonoOpaque');
         const f = new GifFrame(bitmap);
-        const p = f.makePalette();
+        const p = f.getPalette();
         assert.deepStrictEqual(p.colors, [0xFF0000]);
         assert.strictEqual(p.usesTransparency, false);
         done();
@@ -273,7 +273,7 @@ describe("GifFrame palette", () => {
 
         const bitmap = Tools.getBitmap('singleFrameBWOpaque');
         const f = new GifFrame(bitmap);
-        const p = f.makePalette();
+        const p = f.getPalette();
         assert.deepStrictEqual(p.colors, [0x000000, 0xffffff]);
         assert.strictEqual(p.usesTransparency, false);
         done();
@@ -283,7 +283,7 @@ describe("GifFrame palette", () => {
 
         const bitmap = Tools.getBitmap('singleFrameMultiOpaque');
         const f = new GifFrame(bitmap);
-        const p = f.makePalette();
+        const p = f.getPalette();
         assert.deepStrictEqual(p.colors,
                 [0x0000ff, 0x00ff00, 0xff0000, 0xffffff]);
         assert.strictEqual(p.usesTransparency, false);
@@ -294,7 +294,7 @@ describe("GifFrame palette", () => {
 
         const bitmap = Tools.getBitmap('singleFrameNoColorTrans');
         const f = new GifFrame(bitmap);
-        const p = f.makePalette();
+        const p = f.getPalette();
         assert.deepStrictEqual(p.colors, []);
         assert.strictEqual(p.usesTransparency, true);
         done();
@@ -304,7 +304,7 @@ describe("GifFrame palette", () => {
 
         const bitmap = Tools.getBitmap('singleFrameMonoTrans');
         const f = new GifFrame(bitmap);
-        const p = f.makePalette();
+        const p = f.getPalette();
         assert.deepStrictEqual(p.colors, [0x00ff00]);
         assert.strictEqual(p.usesTransparency, true);
         done();
@@ -314,7 +314,7 @@ describe("GifFrame palette", () => {
 
         const bitmap = Tools.getBitmap('singleFrameMultiTrans');
         const f = new GifFrame(bitmap);
-        const p = f.makePalette();
+        const p = f.getPalette();
         assert.deepStrictEqual(p.colors,
                 [0x000000, 0x0000ff, 0x00ff00, 0xff0000]);
         assert.strictEqual(p.usesTransparency, true);
@@ -329,8 +329,8 @@ describe("Jimp behavior in frames", () => {
         const bitmap = Tools.getBitmap('singleFrameMultiOpaque');
         const f = new GifFrame(bitmap);
         f.grayscale();
-        const p = f.makePalette();
-        // Notice that grayscale() is turning 0xffffff into 0xfefefe
+        const p = f.getPalette();
+        // Notice that grayscale() is turning 0xffffff into 0xfefefe and that the same brightness in each of RGB goes to different grays.
         assert.deepStrictEqual(p.colors,
                 [0x121212, 0x363636, 0xb6b6b6, 0xfefefe]);
         assert.strictEqual(p.usesTransparency, false);
@@ -353,6 +353,6 @@ function _assertDefaultFrameOptions(frame) {
     assert.strictEqual(frame.xOffset, 0);
     assert.strictEqual(frame.yOffset, 0);
     assert.strictEqual(frame.disposalMethod, GifFrame.DisposeToAnything);
-    assert.strictEqual(typeof frame.delayHundreths, 'number');
+    assert.strictEqual(typeof frame.delayCentisecs, 'number');
     assert.strictEqual(frame.interlaced, false);
 }
