@@ -78,15 +78,6 @@ class GifCodec
                 }
             });
 
-            if (spec.width && spec.width !== maxWidth ||
-                    spec.height && spec.height !== maxHeight)
-            {
-                throw new GifError(`Specified GIF dimensions `+
-                        `${spec.width} x ${spec.height} ≠ largest output `+
-                        `dimensions ${maxWidth} x ${maxHeight} `+
-                        `(try not specifying GIF dimensions)`);
-            }
-            
             spec = Object.assign({}, spec); // don't munge caller's spec
             spec.width = maxWidth;
             spec.height = maxHeight;
@@ -182,16 +173,7 @@ function _encodeGif(frames, spec) {
             spec.colorScope = Gif.LocalColorsOnly
         }
     }
-
-    if (spec.usesTransparency !== undefined && spec.usesTransparency != null &&
-            colorInfo.usesTransparency !== spec.usesTransparency)
-    {
-        const specSays = (spec.usesTransparency ? 'uses' : 'does not use');
-        const gifSays = (colorInfo.usesTransparency ? 'uses' : 'does not use');
-        throw new GifError(`Gif spec asserts that GIF ${specSays} `+
-                `transparency, but the GIF actually ${gifSays} it `+
-                `(try not specifying 'usesTransparency')`);
-    }
+    spec.usesTransparency = colorInfo.usesTransparency;
 
     const localPalettes = colorInfo.palettes;
     if (spec.colorScope === Gif.LocalColorsOnly) {

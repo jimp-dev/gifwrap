@@ -254,9 +254,8 @@ function _encodeDecodeFile(filename, colorScope) {
     .then(readGif => {
 
         expectedGif = readGif;
-        const spec = Tools.getGifSpec(readGif);
-        spec.colorScope = colorScope;
-        return defaultCodec.encodeGif(readGif.frames, spec);
+        return defaultCodec.encodeGif(readGif.frames, 
+                { loops: readGif.loops, colorScope: colorScope });
     })
     .then(encodedGif => {
 

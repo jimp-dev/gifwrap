@@ -70,14 +70,6 @@ exports.getGifPath = function (filenameMinusExtension) {
     return exports.getFixturePath(filenameMinusExtension + '.gif');
 };
 
-exports.getGifSpec = function (gif) {
-    const options = Object.assign({}, gif);
-    // clear for confidence that these aren't affecting the test results
-    options.frames = undefined; 
-    options.buffer = undefined;
-    return options;
-};
-
 exports.getSeries = function (seriesName, transparentRGB) {
     const series = Bitmaps.PREMADE[seriesName];
     if (series === undefined) {

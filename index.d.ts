@@ -4,10 +4,7 @@ type JimpCallback = (err: Error, image: Jimp) => void;
 
 export interface GifSpec {
 
-    width?: number;
-    height?: number;
     loops?: number;
-    usesTransparency?: boolean;
     colorScope?: 0|1|2;
 }
 

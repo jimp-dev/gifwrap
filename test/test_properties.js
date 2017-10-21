@@ -8,41 +8,35 @@ const defaultCodec = new GifCodec();
 
 describe("Gif width/height", () => {
 
-    it("accepts width/height = size of the frames", () => {
+    it("sets width/height = size of the frames", () => {
 
         const w = 24, h = 10;
         const frames = [
             new GifFrame(w, h),
             new GifFrame(w, h, 0xffffffff)
         ];
-        return defaultCodec.encodeGif(frames, {
-            width: w,
-            height: h
-        })
+        return defaultCodec.encodeGif(frames)
         .then(gif => {
             assert.strictEqual(gif.width, w);
             assert.strictEqual(gif.height, h);
         });
     });
 
-    it("accepts width/height = size of largest frame", () => {
+    it("sets width/height = size of largest frame", () => {
 
         const w = 24, h = 10;
         const frames = [
             new GifFrame(w - 1, h - 1),
             new GifFrame(w, h, 0xffffffff)
         ];
-        return defaultCodec.encodeGif(frames, {
-            width: w,
-            height: h
-        })
+        return defaultCodec.encodeGif(frames)
         .then(gif => {
             assert.strictEqual(gif.width, w);
             assert.strictEqual(gif.height, h);
         });
     });
 
-    it("accepts width/height = largest frame boundary", () => {
+    it("sets width/height = largest frame boundary", () => {
 
         const w = 24, h = 10;
         const frames = [
@@ -52,101 +46,10 @@ describe("Gif width/height", () => {
             }),
             new GifFrame(w, h, 0xffffffff)
         ];
-        return defaultCodec.encodeGif(frames, {
-            width: w,
-            height: h
-        })
+        return defaultCodec.encodeGif(frames)
         .then(gif => {
             assert.strictEqual(gif.width, w);
             assert.strictEqual(gif.height, h);
-        });
-    });
-
-    it("rejects width < width of largest frame", () => {
-
-        const w = 24, h = 10;
-        const frames = [
-            new GifFrame(w, h),
-            new GifFrame(w + 1, h, 0xffffffff)
-        ];
-        return defaultCodec.encodeGif(frames, {
-            width: w,
-            height: h
-        })
-        .then(gif => {
-            assert.fail("shouldn't encode too-small width");
-        })
-        .catch(err => {
-            if (!(err instanceof GifError)) {
-                throw err;
-            }
-            assert.match(err.message, /≠ largest output/);
-        });
-    });
-
-    it("rejects height < height of largest frame", () => {
-
-        const w = 24, h = 10;
-        const frames = [
-            new GifFrame(w, h),
-            new GifFrame(w, h + 1, 0xffffffff)
-        ];
-        return defaultCodec.encodeGif(frames, {
-            width: w,
-            height: h
-        })
-        .then(gif => {
-            assert.fail("shouldn't encode too-small height");
-        })
-        .catch(err => {
-            if (!(err instanceof GifError)) {
-                throw err;
-            }
-            assert.match(err.message, /≠ largest output/);
-        });
-    });
-
-    it("rejects width > largest frame boundary", () => {
-
-        const w = 24, h = 10;
-        const frames = [
-            new GifFrame(w, h),
-            new GifFrame(w + 2, h, 0xffffffff)
-        ];
-        return defaultCodec.encodeGif(frames, {
-            width: w,
-            height: h
-        })
-        .then(gif => {
-            assert.fail("shouldn't encode too-large x boundary");
-        })
-        .catch(err => {
-            if (!(err instanceof GifError)) {
-                throw err;
-            }
-            assert.match(err.message, /≠ largest output/);
-        });
-    });
-
-    it("rejects height > largest frame boundary", () => {
-
-        const w = 24, h = 10;
-        const frames = [
-            new GifFrame(w, h),
-            new GifFrame(w, h + 2, 0xffffffff)
-        ];
-        return defaultCodec.encodeGif(frames, {
-            width: w,
-            height: h
-        })
-        .then(gif => {
-            assert.fail("shouldn't encode too-large y boundary");
-        })
-        .catch(err => {
-            if (!(err instanceof GifError)) {
-                throw err;
-            }
-            assert.match(err.message, /≠ largest output/);
         });
     });
 });
@@ -198,15 +101,13 @@ describe("Gif loop count", () => {
 
 describe("Gif transparency", () => {
 
-    it("indicate/accepts no transparency", () => {
+    it("indicates no transparency", () => {
 
         return GifUtil.read(Tools.getGifPath('twoFrameMultiOpaque'))
         .then(readGif => {
 
             assert.strictEqual(readGif.usesTransparency, false);
-            const spec = Tools.getGifSpec(readGif);
-            spec.usesTransparency = false;
-            return defaultCodec.encodeGif(readGif.frames, spec);
+            return defaultCodec.encodeGif(readGif.frames);
         })
         .then(encodedGif => {
 
@@ -214,57 +115,17 @@ describe("Gif transparency", () => {
         })
     });
 
-    it("indicates/accepts transparency", () => {
+    it("indicates transparency", () => {
 
         return GifUtil.read(Tools.getGifPath('threeFrameMonoTrans'))
         .then(readGif => {
 
             assert.strictEqual(readGif.usesTransparency, true);
-            const spec = Tools.getGifSpec(readGif);
-            spec.usesTransparency = true;
-            return defaultCodec.encodeGif(readGif.frames, spec);
+            return defaultCodec.encodeGif(readGif.frames);
         })
         .then(encodedGif => {
 
             assert.strictEqual(encodedGif.usesTransparency, true);
-        })
-    });
-
-    it("rejects no-transparency indication when transparent", () => {
-
-        return GifUtil.read(Tools.getGifPath('threeFrameMonoTrans'))
-        .then(readGif => {
-
-            const spec = Tools.getGifSpec(readGif);
-            spec.usesTransparency = false;
-            return defaultCodec.encodeGif(readGif.frames, spec);
-        })
-        .then(encodedGif => {
-
-            assert.fail("no-transparency indicated when transparent");
-        })
-        .catch(err => {
-
-            assert.match(err.message, /transparency/);
-        })
-    });
-
-    it("rejects transparency indication when opaque", () => {
-
-        return GifUtil.read(Tools.getGifPath('twoFrameMultiOpaque'))
-        .then(readGif => {
-
-            const spec = Tools.getGifSpec(readGif);
-            spec.usesTransparency = true;
-            return defaultCodec.encodeGif(readGif.frames, spec);
-        })
-        .then(encodedGif => {
-
-            assert.fail("transparency indicated when opaque");
-        })
-        .catch(err => {
-
-            assert.match(err.message, /transparency/);
         })
     });
 });
@@ -344,8 +205,7 @@ describe("GifFrame delay", () => {
             for (let i = 0; i < frames.length; ++i) {
                 frames[i].delayCentisecs = (i + 1)*25;
             }
-            const spec = Tools.getGifSpec(readGif);
-            return defaultCodec.encodeGif(frames, spec);
+            return defaultCodec.encodeGif(frames, { loops: readGif.loops });
         })
         .then(encodedGif => {
 
@@ -378,8 +238,7 @@ describe("GifFrame disposal method", () => {
             for (let i = 0; i < 4; ++i) {
                 frames[i].disposalMethod = i;
             }
-            const spec = Tools.getGifSpec(readGif);
-            return defaultCodec.encodeGif(frames, spec);
+            return defaultCodec.encodeGif(frames, { loops: readGif.loops });
         })
         .then(encodedGif => {
 
@@ -399,9 +258,7 @@ function _verifyEncodesLoopCount(sourceFilename, loopCount) {
     return GifUtil.read(Tools.getGifPath(sourceFilename))
     .then(readGif => {
 
-        const spec = Tools.getGifSpec(readGif);
-        spec.loops = loopCount;
-        return defaultCodec.encodeGif(readGif.frames, spec);
+        return defaultCodec.encodeGif(readGif.frames, { loops: loopCount });
     })
     .then(encodedGif => {
 
