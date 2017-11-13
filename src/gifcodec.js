@@ -1,11 +1,10 @@
 'use strict';
 
-const RBTree = require('bintrees').RBTree;
 const Omggif = require('./omggif');
 const { Gif, GifError } = require('./gif');
 let GifUtil; // allow circular dependency with GifUtil
 process.nextTick(() => {
-    GifUtil = require('./gifutil').GifUtil
+    GifUtil = require('./gifutil');
 });
 
 const { GifFrame } = require('./gifframe');
@@ -66,21 +65,11 @@ class GifCodec
             if (frames === null || frames.length === 0) {
                 throw new GifError("there are no frames");
             }
-            let maxWidth = 0, maxHeight = 0;
-            frames.forEach(frame => {
-                const width = frame.xOffset + frame.bitmap.width;
-                if (width > maxWidth) {
-                    maxWidth = width;
-                }
-                const height = frame.yOffset + frame.bitmap.height;
-                if (height > maxHeight) {
-                    maxHeight = height;
-                }
-            });
+            const dims = GifUtil.getMaxDimensions(frames);
 
             spec = Object.assign({}, spec); // don't munge caller's spec
-            spec.width = maxWidth;
-            spec.height = maxHeight;
+            spec.width = dims.maxWidth;
+            spec.height = dims.maxHeight;
             spec.loops = spec.loops || 0;
             spec.colorScope = spec.colorScope || Gif.GlobalColorsPreferred;
 
@@ -135,12 +124,8 @@ class GifCodec
 exports.GifCodec = GifCodec;
 
 function _colorLookupLinear(colors, color) {
-    for (let i = 0; i < colors.length; ++i) {
-        if (colors[i] === color) {
-            return i;
-        }
-    }
-    return null;
+    const index = colors.indexOf(color);
+    return (index === -1 ? null : index);
 }
 
 function _colorLookupBinary(colors, color) {
@@ -254,7 +239,7 @@ function _getFrameSizeEst(frame, pixelBitWidth) {
 
 function _getIndexedImage(frameIndex, frame, palette) {
     const colors = palette.colors;
-    const colorToIndexFunc = (colors.length <= 5 ? // guess at the break-even
+    const colorToIndexFunc = (colors.length <= 8 ? // guess at the break-even
             _colorLookupLinear : _colorLookupBinary);
     const colorBuffer = frame.bitmap.data;
     const indexBuffer = new Buffer(colorBuffer.length/4);

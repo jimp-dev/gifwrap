@@ -352,7 +352,7 @@ describe("Jimp behavior in frames", () => {
 function _assertDefaultFrameOptions(frame) {
     assert.strictEqual(frame.xOffset, 0);
     assert.strictEqual(frame.yOffset, 0);
-    assert.strictEqual(frame.disposalMethod, GifFrame.DisposeToAnything);
+    assert.strictEqual(frame.disposalMethod, GifFrame.DisposeToBackgroundColor);
     assert.strictEqual(typeof frame.delayCentisecs, 'number');
     assert.strictEqual(frame.interlaced, false);
 }

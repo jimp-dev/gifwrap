@@ -12,7 +12,7 @@ exports.checkFrameDefaults = function (actualInfo, options, frameIndex = 0) {
     options.delayCentisecs = options.delayCentisecs || 8;
     options.interlaced = (options.interlaced === true);
     options.disposalMethod =
-            (options.disposalMethod || GifFrame.DisposeToAnything);
+            (options.disposalMethod || GifFrame.DisposeToBackgroundColor);
     exports.verifyFrameInfo(actualInfo, options, frameIndex);
 };
 

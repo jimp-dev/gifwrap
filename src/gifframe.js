@@ -1,7 +1,6 @@
 'use strict';
 
 const Jimp = require('jimp');
-const RBTree = require('bintrees').RBTree;
 const { GifError } = require('./gif');
 
 class GifFrame extends Jimp {
@@ -83,41 +82,60 @@ class GifFrame extends Jimp {
             }
             this.xOffset = options.xOffset || 0;
             this.yOffset = options.yOffset || 0;
-            this.disposalMethod = options.disposalMethod || 0;
+            this.disposalMethod = (options.disposalMethod !== undefined ?
+                    options.disposalMethod : GifFrame.DisposeToBackgroundColor);
             this.delayCentisecs = options.delayCentisecs || 8;
             this.interlaced = options.interlaced || false;
         }
     }
-    
+
     getPalette() {
-        // returns palette with colors sorted low to high
-        const tree = new RBTree((a, b) => (a - b));
+        // returns with colors sorted low to high
+        const colorSet = new Set();
         const buf = this.bitmap.data;
         let i = 0;
-        let color;
         let usesTransparency = false;
         while (i < buf.length) {
             if (buf[i + 3] < 255) {
                 usesTransparency = true;
             }
             else {
-                color = (buf.readUInt32BE(i, true) >> 8) & 0xFFFFFF;
-                if (tree.find(color) === null) {
-                    tree.insert(color);
-                }
+                // can eliminate the bitshift by starting one byte prior
+                const color = (buf.readUInt32BE(i, true) >> 8) & 0xFFFFFF;
+                colorSet.add(color);
             }
             i += 4; // skip alpha
         }
-        const colors = Array(tree.size);
-        const iter = tree.iterator();
+        const colors = new Array(colorSet.size);
+        const iter = colorSet.values();
         for (i = 0; i < colors.length; ++i) {
-            colors[i] = iter.next();
+            colors[i] = iter.next().value;
         }
+        colors.sort((a, b) => (a - b));
         let indexCount = colors.length;
         if (usesTransparency) {
             ++indexCount;
         }
         return { colors, usesTransparency, indexCount };
+    }
+
+    greyscale(cb) {
+        // modified from Jimp, which was converting 0xffffff to 0xfefefe and
+        // also using a less accurate weighting
+        const buf = this.bitmap.data;
+        this.scan(0, 0, this.bitmap.width, this.bitmap.height, (x, y, idx) => {
+            const grey = Math.round(
+                0.299 * buf[idx] +
+                0.587 * buf[idx + 1] +
+                0.114 * buf[idx + 2]
+            );
+            buf[idx] = grey;
+            buf[idx + 1] = grey;
+            buf[idx + 2] = grey;
+        });
+
+        if (typeof cb === 'function') return cb.call(this, null, this);
+        else return this;
     }
 
     reframe(xOffset, yOffset, width, height, fillRGBA) {
@@ -144,6 +162,50 @@ class GifFrame extends Jimp {
         }
         image.blit(this, newX, newY, cropX, cropY, cropWidth, cropHeight);
         this.bitmap = image.bitmap;
+        return this;
+    }
+
+    scale(factor, mode) {
+        if (mode) {
+            return super.scale(factor, mode);
+        }
+        if (factor === 1) {
+            return;
+        }
+        if (!Number.isInteger(factor) || factor < 1) {
+            throw new Error(
+                    "the scale must be an integer >= 1 when there is no mode");
+        }
+        const sourceWidth = this.bitmap.width;
+        const sourceHeight = this.bitmap.height;
+        const destByteWidth = sourceWidth * factor * 4;
+        const sourceBuf = this.bitmap.data;
+        const destBuf = new Buffer(sourceHeight * destByteWidth * factor);
+        let sourceIndex = 0;
+        let priorDestRowIndex;
+        let destIndex = 0;
+        for (let y = 0; y < sourceHeight; ++y) {
+            priorDestRowIndex = destIndex;
+            for (let x = 0; x < sourceWidth; ++x) {
+                const color = sourceBuf.readUInt32BE(sourceIndex, true);
+                for (let cx = 0; cx < factor; ++cx) {
+                    destBuf.writeUInt32BE(color, destIndex);
+                    destIndex += 4;
+                }
+                sourceIndex += 4;
+            }
+            for (let cy = 1; cy < factor; ++cy) {
+                destBuf.copy(destBuf, destIndex, priorDestRowIndex, destIndex);
+                destIndex += destByteWidth;
+                priorDestRowIndex += destByteWidth;
+            }
+        }
+        this.bitmap = {
+            width: sourceWidth * factor,
+            height: sourceHeight * factor,
+            data: destBuf
+        };
+        return this;
     }
 }
 

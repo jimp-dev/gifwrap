@@ -1,7 +1,5 @@
 'use strict';
 
-const ExtendableError = require('es6-error');
-
 class Gif {
 
     // width - width of GIF in pixels
@@ -27,7 +25,7 @@ Gif.GlobalColorsPreferred = 0;
 Gif.GlobalColorsOnly = 1;
 Gif.LocalColorsOnly = 2;
 
-class GifError extends ExtendableError {
+class GifError extends Error {
 
     constructor(messageOrError) {
         super(messageOrError);

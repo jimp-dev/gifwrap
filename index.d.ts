@@ -22,11 +22,11 @@ export class Gif implements GifSpec {
     static readonly GlobalColorsOnly: 1;
     static readonly LocalColorsOnly: 2;
 
-    width?: number;
-    height?: number;
-    loops?: number;
-    usesTransparency?: boolean;
-    colorScope?: 0|1|2;
+    width: number;
+    height: number;
+    loops: number;
+    usesTransparency: boolean;
+    colorScope: 0|1|2;
     
     frames: GifFrame[];
     buffer: Buffer;
@@ -42,7 +42,7 @@ export interface GifFrameOptions {
     isInterlaced?: boolean;
 }
 
-export interface BitmapSpec {
+export interface JimpBitmap {
     width: number;
     height: number;
     data: Buffer;
@@ -72,7 +72,7 @@ export class GifFrame extends Jimp implements GifFrameOptions {
     constructor(path: string, callback?: JimpCallback);
     constructor(image: Jimp);
     constructor(frame: GifFrame);
-    constructor(bitmap: BitmapSpec, options?: GifFrameOptions);
+    constructor(pixmap: JimpBitmap, options?: GifFrameOptions);
 
     getPalette(): GifPalette;
     reframe(xOffset: number, yOffset: number, width: number, height: number, fillRGBA?: number) : void;
@@ -95,19 +95,15 @@ export class GifError extends Error {
     constructor(message: string);
 }
 
-export interface GifUtilConfig {
-    decoder?: GifDecoder;
-    encoder?: GifEncoder;
-}
+export namespace GifUtil {
 
-export class GifUtil {
-
-    static getColorInfo(frames: GifFrame[], maxGlobalIndex?: number): {
+    function getColorInfo(frames: GifFrame[], maxGlobalIndex?: number): {
         colors?: number[],
         indexCount?: number,
         usesTransparency: boolean,
         palettes: GifPalette[]
     }
-    static read(source: string|Buffer, decoder?: GifDecoder): Promise<Gif>;
-    static write(path: string, frames: GifFrame[], spec?: GifSpec, encoder?: GifEncoder): Promise<Gif>;
+    function getMaxDimensions(frames: GifFrame[]): { maxWidth: number, maxHeight: number };
+    function read(source: string|Buffer, decoder?: GifDecoder): Promise<Gif>;
+    function write(path: string, frames: GifFrame[], spec?: GifSpec, encoder?: GifEncoder): Promise<Gif>;
 }
