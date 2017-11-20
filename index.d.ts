@@ -2,6 +2,8 @@ import * as Jimp from 'jimp';
 
 type JimpCallback = (err: Error, image: Jimp) => void;
 
+export type ScanHandler = (x: number, y: number, bufferIndex: number) => void;
+
 export interface GifSpec {
 
     loops?: number;
@@ -76,6 +78,7 @@ export class GifFrame extends Jimp implements GifFrameOptions {
 
     getPalette(): GifPalette;
     reframe(xOffset: number, yOffset: number, width: number, height: number, fillRGBA?: number) : void;
+    scanAll(handler: ScanHandler): void;
 }
 
 export interface GifCodecOptions {

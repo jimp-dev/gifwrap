@@ -207,6 +207,23 @@ class GifFrame extends Jimp {
         };
         return this;
     }
+
+    scanAll(scanHandler) {
+        const width = this.bitmap.width;
+        const bufferLength = this.bitmap.data.length;
+        let bi = 0;
+        let x = 0;
+        let y = 0;
+
+        while (bi < bufferLength) {
+            scanHandler(x, y, bi);
+            bi += 4;
+            if (++x === width) {
+                x = 0;
+                ++y;
+            }
+        }
+    }
 }
 
 GifFrame.DisposeToAnything = 0;
