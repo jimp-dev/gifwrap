@@ -76,6 +76,7 @@ export class GifFrame extends Jimp implements GifFrameOptions {
     constructor(frame: GifFrame);
     constructor(pixmap: JimpBitmap, options?: GifFrameOptions);
 
+    clone(): GifFrame;
     getPalette(): GifPalette;
     reframe(xOffset: number, yOffset: number, width: number, height: number, fillRGBA?: number) : void;
     scanAll(handler: ScanHandler): void;
@@ -100,6 +101,7 @@ export class GifError extends Error {
 
 export namespace GifUtil {
 
+    function cloneFrames(frames: GifFrame[]): GifFrame[];
     function getColorInfo(frames: GifFrame[], maxGlobalIndex?: number): {
         colors?: number[],
         indexCount?: number,

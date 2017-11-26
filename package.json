@@ -1,6 +1,6 @@
 {
   "name": "gifwrap",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "A library for working with GIF images using Jimp",
   "main": "src/index.js",
   "scripts": {

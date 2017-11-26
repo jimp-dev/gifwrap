@@ -89,6 +89,17 @@ class GifFrame extends Jimp {
         }
     }
 
+    clone() {
+        const copy = new GifFrame(this.bitmap.width, this.bitmap.height);
+        this.bitmap.data.copy(copy.bitmap.data);
+        copy.xOffset = this.xOffset;
+        copy.yOffset = this.yOffset;
+        copy.disposalMethod = this.disposalMethod;
+        copy.delayCentisecs = this.delayCentisecs;
+        copy.interlaced = this.interlaced;
+        return copy;
+    }
+
     getPalette() {
         // returns with colors sorted low to high
         const colorSet = new Set();

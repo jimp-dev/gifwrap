@@ -8,6 +8,15 @@ const INVALID_SUFFIXES = ['.jpg', '.jpeg', '.png', '.bmp'];
 
 const defaultCodec = new GifCodec();
 
+exports.cloneFrames = function (frames) {
+    let clones = [];
+    frames.forEach(frame => {
+
+        clones.push(frame.clone());
+    });
+    return clones;
+}
+
 /**
  * Gets information about the colors used in the provided frames. The method is able to return an array of all colors found across all frames. `maxGlobalIndex` controls whether the computation short-circuits to avoid doing work that the caller doesn't need. The method only returns `colors` and `indexCount` for the colors across all frames when the number of indexes required to store the colors and transparency in a GIF (which is the value of `indexCount`) is less than or equal to `maxGlobalIndex`. Short-circuting is useful when the caller just needs to determine whether any frame includes transparency.
  * @param {GifFrame[]} frames Frames to examine for color and transparency.
