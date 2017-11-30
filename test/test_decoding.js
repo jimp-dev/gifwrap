@@ -1,7 +1,6 @@
 'use strict';
 
 const assert = require('chai').assert;
-const Jimp = require('jimp');
 const Tools = require('./lib/tools');
 const { Gif, GifFrame, GifCodec, GifUtil, GifError } =
         require('../src/index');

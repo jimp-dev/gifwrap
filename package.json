@@ -1,7 +1,7 @@
 {
   "name": "gifwrap",
   "version": "0.1.2",
-  "description": "A library for working with GIF images using Jimp",
+  "description": "A Jimp-compatible library for working with GIF images",
   "main": "src/index.js",
   "scripts": {
     "test": "mocha --timeout=5000 ./test/*.js"
@@ -25,10 +25,9 @@
     "url": "https://github.com/jtlapp/gifwrap/issues"
   },
   "homepage": "https://github.com/jtlapp/gifwrap#readme",
-  "dependencies": {
-    "jimp": "^0.2.28"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "chai": "^4.1.2"
+    "chai": "^4.1.2",
+    "jimp": "^0.2.28"
   }
 }

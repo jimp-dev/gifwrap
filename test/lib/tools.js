@@ -5,6 +5,27 @@ const Path = require('path');
 const Bitmaps = require('./bitmaps');
 const { GifFrame } = require('../../src/gifframe');
 
+exports.checkBitmap = function (bitmap, width, height, rgbaOrBuf) {
+    assert.strictEqual(bitmap.width, width);
+    assert.strictEqual(bitmap.height, height);
+    if (Buffer.isBuffer(rgbaOrBuf)) {
+        assert.strictEqual(bitmap.data, rgbaOrBuf);
+    }
+    else if (typeof rgbaOrBuf === 'number') {
+        const rgba = rgbaOrBuf
+        const buf = bitmap.data;
+        for (let bi = 0; bi < buf.length; bi += 4) {
+            const found = buf.readUInt32BE(bi);
+            if (found !== rgba) {
+                assert.fail(found, rgba, `buffer fill color ${found} != ${rgba}`);
+            }
+        }
+    }
+    else {
+        throw new Error("last checkBitmap() param must be a color or a Buffer");
+    }
+}
+
 exports.checkFrameDefaults = function (actualInfo, options, frameIndex = 0) {
     options = Object.assign({}, options); // don't munge caller
     options.xOffset = options.xOffset || 0;

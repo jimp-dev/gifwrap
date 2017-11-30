@@ -1,8 +1,3 @@
-import * as Jimp from 'jimp';
-
-type JimpCallback = (err: Error, image: Jimp) => void;
-
-export type ScanHandler = (x: number, y: number, bufferIndex: number) => void;
 
 export interface GifSpec {
 
@@ -56,7 +51,26 @@ export interface GifPalette {
     usesTransparency: boolean;
 }
 
-export class GifFrame extends Jimp implements GifFrameOptions {
+export class BitmapImage {
+    bitmap: JimpBitmap;
+
+    constructor(pixmap: JimpBitmap);
+    constructor(pixmap: BitmapImage);
+    constructor(width: number, height: number, buffer: Buffer);
+    constructor(width: number, height: number, backgroundRGBA?: number);
+    
+    blit(toImage: BitmapImage, toX: number, toY: number, fromX: number, fromY: number,
+            fromWidth: number, fromHeight: number): this;
+    fillRGBA(color: number): this;
+    greyscale(): this;
+    reframe(xOffset: number, yOffset: number, width: number, height: number, fillRGBA?: number)
+        : this;
+    scale(factor: number): this;
+    scanAllCoords(handler: (x: number, y: number, bufferIndex: number) => void): void;
+    scanAllIndexes(handler: (bufferIndex: number) => void): void;
+}
+
+export class GifFrame extends BitmapImage implements GifFrameOptions {
 
     static readonly DisposeToAnything: 0;
     static readonly DisposeNothing: 1;
@@ -69,17 +83,13 @@ export class GifFrame extends Jimp implements GifFrameOptions {
     delayCentisecs: number;
     interlaced: boolean;
 
-    constructor(width: number, height: number, backgroundRGBA?: number, options?: GifFrameOptions);
-    constructor(width: number, height: number, buffer: Buffer, options?: GifFrameOptions);
-    constructor(path: string, callback?: JimpCallback);
-    constructor(image: Jimp);
-    constructor(frame: GifFrame);
     constructor(pixmap: JimpBitmap, options?: GifFrameOptions);
+    constructor(pixmap: BitmapImage, options?: GifFrameOptions);
+    constructor(width: number, height: number, buffer: Buffer, options?: GifFrameOptions);
+    constructor(width: number, height: number, backgroundRGBA?: number, options?: GifFrameOptions);
+    constructor(frame: GifFrame);
 
-    clone(): GifFrame;
     getPalette(): GifPalette;
-    reframe(xOffset: number, yOffset: number, width: number, height: number, fillRGBA?: number) : void;
-    scanAll(handler: ScanHandler): void;
 }
 
 export interface GifCodecOptions {
@@ -110,5 +120,6 @@ export namespace GifUtil {
     }
     function getMaxDimensions(frames: GifFrame[]): { maxWidth: number, maxHeight: number };
     function read(source: string|Buffer, decoder?: GifDecoder): Promise<Gif>;
-    function write(path: string, frames: GifFrame[], spec?: GifSpec, encoder?: GifEncoder): Promise<Gif>;
+    function write(path: string, frames: GifFrame[], spec?: GifSpec, encoder?: GifEncoder):
+            Promise<Gif>;
 }
