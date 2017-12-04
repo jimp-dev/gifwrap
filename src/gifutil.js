@@ -1,7 +1,7 @@
 'use strict';
 
 const fs = require('fs');
-const { GifError } = require('./gif');
+const { GifFrame, GifError } = require('./gif');
 const { GifCodec } = require('./gifcodec');
 
 const INVALID_SUFFIXES = ['.jpg', '.jpeg', '.png', '.bmp'];
@@ -12,7 +12,7 @@ exports.cloneFrames = function (frames) {
     let clones = [];
     frames.forEach(frame => {
 
-        clones.push(frame.clone());
+        clones.push(new GifFrame(frame));
     });
     return clones;
 }
