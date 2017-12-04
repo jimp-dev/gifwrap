@@ -1,7 +1,8 @@
 'use strict';
 
 const fs = require('fs');
-const { GifFrame, GifError } = require('./gif');
+const { GifFrame } = require('./gifframe');
+const { GifError } = require('./gif');
 const { GifCodec } = require('./gifcodec');
 
 const INVALID_SUFFIXES = ['.jpg', '.jpeg', '.png', '.bmp'];
