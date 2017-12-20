@@ -48,7 +48,7 @@ GifUtil.write("my-creation.gif", frames, { loops: 3 }).then(gif => {
 
 // to get the byte encoding without writing to a file...
 const codec = new GifCodec();
-codec.encodeGif(frames).then(gif => {
+codec.encodeGif(frames, { loops: 3 }).then(gif => {
     // byte encoding is now in gif.buffer
 });
 
@@ -116,14 +116,14 @@ codec.decodeGif(byteEncodingBuffer).then(sourceGif => {
         frame.reframe(xOffset, yOffset, edgeLength, edgeLength);
     });
 
-    // The encoder determines GIF size from the frames, not the provided spec.
+    // The encoder determines GIF size from the frames, not the provided spec (sourceGif).
     return GifUtil.write("modified.gif", sourceGif.frames, sourceGif).then(outputGif => {
         console.log("modified");
     });
 });
 ```
 
-Notice that both encoding and decoding yields a GIF object. This is an instance of class Gif, and it provides information about the GIF, such as its size and how many times it loops. But notice also that the code only ever encodes an array of frames and a spec for a GIF. The spec is the subset of Gif properties that can't be inferred from the frames -- namely, how many times the GIF loops and how to attempt to package the color tables within the encoding.
+Notice that both encoding and decoding yields a GIF object. This is an instance of class Gif, and it provides information about the GIF, such as its size and how many times it loops. Notice also that you never call the Gif constructor to create a GIF. Instead, GIFs are created by providing a GifFrame array and a specification of GIF options. That specification is a subset of the properties of a Gif, so you can pass a previously-loaded Gif as a specification when writing or encoding. The spec only includes the properties that can't be inferred from the frames -- namely, how many times the GIF loops and how to attempt to package the color tables within the encoding.
 
 ## Leveraging Jimp
 
@@ -171,7 +171,7 @@ You may want to create helper functions to encapsulate this behavior. In order t
 
 `gifwrap` provides a default GIF encoder/decoder, but it is architected to be able to work with other encoders and decoders. The encoder and decoder may even be separate implementations. Encoders and decoders have varying capabilities, performance measures, and levels of reliability.
 
-GifCodec is the default implementation, and it's both an encoder and a decoder. It's an adapter that wraps a locally-modified version of the [`omggif`](https://github.com/deanm/omggif) module. It appears to support a broad variety of GIFs, although it cannot produce an interlaced encoding (which there is little need for anyway). The `gifwrap` test suite also happens to serve as a test suite for `omggif`, by virtue of using `omggif` underneath. It revealed very few and only minor bugs, which the local copy of `omggif` corrects.
+GifCodec is the default implementation, and it's both an encoder and a decoder. It's an adapter that wraps a locally-modified version of the [`omggif`](https://github.com/deanm/omggif) module. It appears to support a broad variety of GIFs, although it cannot produce an interlaced encoding (which there is little need for anyway). The `gifwrap` test suite also happens to serve as a test suite for `omggif`, by virtue of using `omggif` underneath. It revealed very few and only minor issues, which the local copy of `omggif` corrects.
 
 An encoder need only implement GifCodec's [`encodeGif()`](#GifCodec+encodeGif) method, and a decoder need only implement its [`decodeGif()`](#GifCodec+decodeGif) method. See the descriptions of those methods for the requirement details. Although GifCodec is stateless, so that instances an be reused across multiple encodings and decodings, third party encoders and decoders need not be. However, applications that use the library with stateful encoders will need to be aware of the need to create new instances.
 
@@ -509,7 +509,7 @@ write() encodes a GIF and saves it as a file.
 | --- | --- | --- |
 | options | <code>object</code> | Optionally takes an objection whose only possible property is `transparentRGB`. Images are internally represented in RGBA format, where A is the alpha value of a pixel. When `transparentRGB` is provided, this RGB value is assigned to transparent pixels, which have alpha value 0x00. All other pixels have alpha value 0xFF. The RGB color of transparent pixels shouldn't matter for most applications. Defaults to 0x000000. |
 
-GifCodec is a class that both encodes and decodes GIFs. It implements both the `encode()` method expected of an encoder and the `decode()` method expected of a decoder, and it wraps a modified version of the `omggif` GIF encoder/decoder package. GifCodec serves as this library's default encoder and decoder, but it's possible to wrap other GIF encoders and decoders for use by `gifwrap` as well.
+GifCodec is a class that both encodes and decodes GIFs. It implements both the `encode()` method expected of an encoder and the `decode()` method expected of a decoder, and it wraps a modified version of the `omggif` GIF encoder/decoder package. GifCodec serves as this library's default encoder and decoder, but it's possible to wrap other GIF encoders and decoders for use by `gifwrap` as well. GifCodec will not encode GIFs with interlacing.
 
 Instances of this class are stateless and can be shared across multiple encodings and decodings.
 
