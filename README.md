@@ -139,10 +139,10 @@ const Jimp = require('jimp');
 const j = new Jimp(200, 100, 0xFFFFFFFF);
 
 // create a frame clone of a Jip bitmap
-const fShared = new GifFrame(new BitmapImage(j));
+const fCopied = new GifFrame(new BitmapImage(j));
 
 // create a frame that shares a bitmap with Jimp
-const fCopied = new GifFrame(j);
+const fShared = new GifFrame(j);
 ```
 
 And you can construct a Jimp instance from a GifFrame image as follows:
