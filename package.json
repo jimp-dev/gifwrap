@@ -1,7 +1,7 @@
 {
   "name": "gifwrap",
   "version": "0.5.0",
-  "description": "A Jimp-compatible library for working with GIF images",
+  "description": "A Jimp-compatible library for working with GIFs",
   "main": "src/index.js",
   "scripts": {
     "test": "mocha --timeout=5000 ./test/*.js",
