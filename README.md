@@ -1,6 +1,6 @@
 # gifwrap
 
-A Jimp-compatible library for working with GIF images 
+A Jimp-compatible library for working with GIFs 
 
 ## Overview
 
