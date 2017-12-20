@@ -141,8 +141,12 @@ const j = new Jimp(200, 100, 0xFFFFFFFF);
 // create a frame clone of a Jip bitmap
 const fCopied = new GifFrame(new BitmapImage(j));
 
-// create a frame that shares a bitmap with Jimp
-const fShared = new GifFrame(j);
+// create a frame that shares a bitmap with Jimp (one way)
+const fShared1 = new GifFrame(j);
+
+// create a frame that shares a bitmap with Jimp (another way)
+const fShared2 = new GifFrame(1, 1, 0); // any GifFrame
+fShared2.bitmap = j.bitmap;
 ```
 
 And you can construct a Jimp instance from a GifFrame image as follows:
@@ -153,11 +157,11 @@ const Jimp = require('jimp');
 const f = new Frame(200, 100, 0xFFFFFFFF);
 
 // create a Jimp containing a clone of the frame bitmap
-const jCopied = new Jimp(1, 1, 0);
+const jCopied = new Jimp(1, 1, 0); // any Jimp
 jCopied.bitmap = new BitmapImage(f);
 
 // create a Jimp that shares a bitmap with the frame
-const jShared = new Jimp(1, 1, 0);
+const jShared = new Jimp(1, 1, 0); // any Jimp
 jShared.bitmap = f.bitmap;
 ```
 
@@ -283,13 +287,13 @@ Its constructor should only ever be called by the GIF encoder or decoder.
 <a name="new_BitmapImage_new"></a>
 
 ### new BitmapImage()
-BitmapImage is a class that hold an RGBA (red, green, blue, alpha) representation of an image. It's shape is borrowed from the Jimp package to make it easy to transfer GIF image frames into Jimp and Jimp images into GIF image frames. Each instance has the following properties:
+BitmapImage is a class that hold an RGBA (red, green, blue, alpha) representation of an image. It's shape is borrowed from the Jimp package to make it easy to transfer GIF image frames into Jimp and Jimp images into GIF image frames. Each instance has a `bitmap` property having the following properties:
 
 Property | Description
 --- | ---
-width | width of image in pixels
-height | height of image in pixels
-data | a Buffer whose every four bytes represents a pixel, each sequential byte of a pixel corresponding to the red, green, blue, and alpha values of the pixel
+bitmap.width | width of image in pixels
+bitmap.height | height of image in pixels
+bitmap.data | a Buffer whose every four bytes represents a pixel, each sequential byte of a pixel corresponding to the red, green, blue, and alpha values of the pixel
 
 Its constructor supports the following signatures:
 

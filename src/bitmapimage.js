@@ -5,13 +5,13 @@
 class BitmapImage {
 
     /**
-     * BitmapImage is a class that hold an RGBA (red, green, blue, alpha) representation of an image. It's shape is borrowed from the Jimp package to make it easy to transfer GIF image frames into Jimp and Jimp images into GIF image frames. Each instance has the following properties:
+     * BitmapImage is a class that hold an RGBA (red, green, blue, alpha) representation of an image. It's shape is borrowed from the Jimp package to make it easy to transfer GIF image frames into Jimp and Jimp images into GIF image frames. Each instance has a `bitmap` property having the following properties:
      * 
      * Property | Description
      * --- | ---
-     * width | width of image in pixels
-     * height | height of image in pixels
-     * data | a Buffer whose every four bytes represents a pixel, each sequential byte of a pixel corresponding to the red, green, blue, and alpha values of the pixel
+     * bitmap.width | width of image in pixels
+     * bitmap.height | height of image in pixels
+     * bitmap.data | a Buffer whose every four bytes represents a pixel, each sequential byte of a pixel corresponding to the red, green, blue, and alpha values of the pixel
      *
      * Its constructor supports the following signatures:
      *
