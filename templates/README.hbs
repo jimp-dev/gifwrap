@@ -138,9 +138,14 @@ const { GifFrame } = require('gifwrap');
 const Jimp = require('jimp');
 const j = new Jimp(200, 100, 0xFFFFFFFF);
 
-const fCopied = new GifFrame(j); // frame containing clone of the Jimp bitmap
+// create a frame clone of the Jimp bitmap
+const fCopied = new GifFrame(j);
+
+// create a frame that shares a bitmap with Jimp (one way)
 const fShared1 = new GifFrame(1, 1, 0);
-fShared1.bitmap = j.bitmap; // frame sharing a bitmap with Jimp
+fShared1.bitmap = j.bitmap;
+
+// create a frame that shares a bitmap with Jimp (another way)
 const fShared2 = new GifFrame(j.bitmap.width, j.bitmap.height, j.bitmap.data); // also shared
 ```
 
@@ -151,10 +156,13 @@ const { BitmapImage, GifFrame } = require('gifwrap');
 const Jimp = require('jimp');
 const f = new Frame(200, 100, 0xFFFFFFFF);
 
+// create a Jimp containing a clone of the frame bitmap
 const jCopied = new Jimp(1, 1, 0);
-jCopied.bitmap = new BitmapImage(f); // jimp containing a clone of the frame bitmap
-jShared = new Jimp(1, 1, 0);
-jShared.bitmap = f.bitmap; // jimp sharing a bitmap with the frame
+jCopied.bitmap = new BitmapImage(f);
+
+// create a Jimp that shares a bitmap with the frame
+const jShared = new Jimp(1, 1, 0);
+jShared.bitmap = f.bitmap;
 ```
 
 You may want to create helper functions to encapsulate this behavior. In order to avoid creating a dependency on `Jimp`, such helper functions do not appear in `gifwrap`.
