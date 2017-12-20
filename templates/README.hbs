@@ -134,19 +134,15 @@ Both Jimp images and GifFrame instances share the `bitmap` property. By transfer
 You can construct a GifFrame from a Jimp image as follows:
 
 ```js
-const { GifFrame } = require('gifwrap');
+const { BitmapImage, GifFrame } = require('gifwrap');
 const Jimp = require('jimp');
 const j = new Jimp(200, 100, 0xFFFFFFFF);
 
-// create a frame clone of the Jimp bitmap
+// create a frame clone of a Jip bitmap
+const fShared = new GifFrame(new BitmapImage(j));
+
+// create a frame that shares a bitmap with Jimp
 const fCopied = new GifFrame(j);
-
-// create a frame that shares a bitmap with Jimp (one way)
-const fShared1 = new GifFrame(1, 1, 0);
-fShared1.bitmap = j.bitmap;
-
-// create a frame that shares a bitmap with Jimp (another way)
-const fShared2 = new GifFrame(j.bitmap.width, j.bitmap.height, j.bitmap.data); // also shared
 ```
 
 And you can construct a Jimp instance from a GifFrame image as follows:
