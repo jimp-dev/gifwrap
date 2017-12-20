@@ -3,6 +3,8 @@
 const BitmapImage = require('./bitmapimage');
 const { GifError } = require('./gif');
 
+/** @class GifFrame */
+
 class GifFrame extends BitmapImage {
 
     // xOffset - x offset of bitmap on GIF (defaults to 0)
@@ -10,6 +12,30 @@ class GifFrame extends BitmapImage {
     // disposalMethod - pixel disposal method when handling partial images
     // delayCentisecs - duration of frame in hundredths of a second
     // interlaced - whether the image is interlaced (defaults to false)
+
+    /**
+     * GifFrame is a class representing an image frame of a GIF. GIFs contain one or more instances of GifFrame.
+     * 
+     * Property | Description
+     * --- | ---
+     * xOffset | x-coord of position within GIF at which to render the image (defaults to 0)
+     * yOffset | y-coord of position within GIF at which to render the image (defaults to 0)
+     * disposalMethod | GIF disposal method; only relevant when the frames aren't all the same size (defaults to 2, disposing to background color)
+     * delayCentisecs | duration of the frame in hundreths of a second
+     * interlaced | boolean indicating whether the frame renders interlaced
+     * 
+     * Its constructor supports the following signatures:
+     * 
+     * new GifFrame(bitmap: {width: number, height: number, data: Buffer}, options?)
+     * new GifFrame(bitmapImage: BitmapImage, options?)
+     * new GifFrame(width: number, height: number, buffer: Buffer, options?)
+     * new GifFrame(width: number, height: number, backgroundRGBA?: number, options?)
+     * new GifFrame(frame: GifFrame)
+     * 
+     * See the base class BitmapImage for a discussion of all parameters but `options` and `frame`. `options` is an optional argument providing initial values for the above-listed GifFrame properties. Each property within option is itself optional.
+     * 
+     * Provide a `frame` to the constructor to create a clone of the provided frame. The new frame includes a copy of the provided frame's pixel data so that each can subsequently be modified without affecting each other.
+     */
 
     constructor(...args) {
         super(...args);
@@ -36,6 +62,18 @@ class GifFrame extends BitmapImage {
             this.interlaced = options.interlaced || false;
         }
     }
+
+    /**
+     * Get a summary of the colors found within the frame. The return value is an object of the following form:
+     * 
+     * Property | Description
+     * --- | ---
+     * colors | An array of all the opaque colors found within the frame. Each color is given as an RGB number of the form 0xRRGGBB. The array is sorted by increasing number. Will be an empty array when the frame is completely transparent.
+     * usesTransparency | boolean indicating whether there are any transparent pixels within the frame. A pixel is considered transparent if its alpha value is not 0xFF.
+     * indexCount | The number of color indexes required to represent this palette of colors. It is equal to the number of opaque colors plus one if the frame includes transparency.
+     * 
+     * @return {object} An object representing a color palette as described above.
+     */
 
     getPalette() {
         // returns with colors sorted low to high

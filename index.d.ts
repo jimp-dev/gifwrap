@@ -54,8 +54,8 @@ export interface GifPalette {
 export class BitmapImage {
     bitmap: JimpBitmap;
 
-    constructor(pixmap: JimpBitmap);
-    constructor(pixmap: BitmapImage);
+    constructor(bitmap: JimpBitmap);
+    constructor(bitmapImage: BitmapImage);
     constructor(width: number, height: number, buffer: Buffer);
     constructor(width: number, height: number, backgroundRGBA?: number);
     
@@ -83,8 +83,8 @@ export class GifFrame extends BitmapImage implements GifFrameOptions {
     delayCentisecs: number;
     interlaced: boolean;
 
-    constructor(pixmap: JimpBitmap, options?: GifFrameOptions);
-    constructor(pixmap: BitmapImage, options?: GifFrameOptions);
+    constructor(bitmap: JimpBitmap, options?: GifFrameOptions);
+    constructor(bitmapImage: BitmapImage, options?: GifFrameOptions);
     constructor(width: number, height: number, buffer: Buffer, options?: GifFrameOptions);
     constructor(width: number, height: number, backgroundRGBA?: number, options?: GifFrameOptions);
     constructor(frame: GifFrame);

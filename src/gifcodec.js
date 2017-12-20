@@ -14,9 +14,21 @@ const PER_FRAME_OVERHEAD = 100;
 
 // Note: I experimented with accepting a global color table when encoding and returning the global color table when decoding. Doing this properly greatly increased the complexity of the code and the amount of clock cycles required. The main issue is that each frame can specify any color of the global color table to be transparent within the frame, while this GIF library strives to hide GIF formatting details from its clients. E.g. it's possible to have 256 colors in the global color table and different transparencies in each frame, requiring clients to either provide per-frame transparency indexes, or for arcane reasons that won't be apparent to client developers, encode some GIFs with local color tables that previously decoded with global tables.
 
+/** @class GifCodec */
+
 class GifCodec
 {
     // _transparentRGBA - RGB given to transparent pixels (alpha=0) on decode; defaults to null indicating 0x000000, which is fastest
+
+    /**
+     * GifCodec is a class that both encodes and decodes GIFs. It implements both the `encode()` method expected of an encoder and the `decode()` method expected of a decoder, and it wraps a modified version of the `omggif` GIF encoder/decoder package. GifCodec serves as this library's default encoder and decoder, but it's possible to wrap other GIF encoders and decoders for use by `gifwrap` as well.
+     * 
+     * Instances of this class are stateless and can be shared across multiple encodings and decodings.
+     * 
+     * Its constructor takes one option argument:
+     * 
+     * @param {object} options Optionally takes an objection whose only possible property is `transparentRGB`. Images are internally represented in RGBA format, where A is the alpha value of a pixel. When `transparentRGB` is provided, this RGB value is assigned to transparent pixels, which have alpha value 0x00. All other pixels have alpha value 0xFF. The RGB color of transparent pixels shouldn't matter for most applications. Defaults to 0x000000.
+     */
 
     constructor(options = {}) {
         this._transparentRGB = null; // 0x000000
@@ -26,6 +38,14 @@ class GifCodec
             this._transparentRGBA = options.transparentRGB * 256;
         }
     }
+
+    /**
+     * Decodes a GIF from a Buffer to yield an instance of Gif. Transparent pixels of the GIF are given alpha values of 0x00, and opaque pixels are given alpha values of 0xFF.
+     * 
+     * @param {Buffer} buffer Bytes of an encoded GIF to decode.
+     * @return {Promise} A Promise that resolves to an instance of the Gif class, representing the encoded GIF.
+     * @throws {GifError} Error upon encountered an encoding-related problem with a GIF, so that the caller can distinguish between software errors and problems with GIFs.
+     */
 
     decodeGif(buffer) {
         try {
@@ -59,6 +79,15 @@ class GifCodec
             return Promise.reject(err);
         }
     }
+
+    /**
+     * Encodes a GIF from provided frames. Any pixel not having an alpha value of 0xFF renders as transparent within the encoding, while all pixels of alpha value 0xFF are opaque.
+     * 
+     * @param {GifFrame[]} frames Array of frames to encode
+     * @param {object} spec An optional object that may provide values for `loops` and `colorScope`, as defined for the Gif class. However, `colorSpace` may also take the value Gif.GlobalColorsPreferred (== 0) to indicate that the encoder should attempt to create only a global color table. `loop` defaults to 0, looping indefinitely, and `colorScope` defaults to Gif.GlobalColorsPreferred.
+     * @return {Promise} A Promise that resolves to an instance of the Gif class, representing the encoded GIF.
+     * @throws {GifError} Error upon encountered an encoding-related problem with a GIF, so that the caller can distinguish between software errors and problems with GIFs.
+     */
 
     encodeGif(frames, spec = {}) {
         try {

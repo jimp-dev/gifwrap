@@ -1,6 +1,29 @@
 'use strict';
 
+/** @class BitmapImage */
+
 class BitmapImage {
+
+    /**
+     * BitmapImage is a class that hold an RGBA (red, green, blue, alpha) representation of an image. It's shape is borrowed from the Jimp package to make it easy to transfer GIF image frames into Jimp and Jimp images into GIF image frames. Each instance has the following properties:
+     * 
+     * Property | Description
+     * --- | ---
+     * width | width of image in pixels
+     * height | height of image in pixels
+     * data | a Buffer whose every four bytes represents a pixel, each sequential byte of a pixel corresponding to the red, green, blue, and alpha values of the pixel
+     *
+     * Its constructor supports the following signatures:
+     *
+     * new BitmapImage(bitmap: { width: number, height: number, data: Buffer })
+     * new BitmapImage(bitmapImage: BitmapImage)
+     * new BitmapImage(width: number, height: number, buffer: Buffer)
+     * new BitmapImage(width: number, height: number, backgroundRGBA?: number)
+     * 
+     * When a `BitmapImage` is provided, the constructed `BitmapImage` is a deep clone of the provided one, so that each image's pixel data can subsequently be modified without affecting each other.
+     *
+     * `backgroundRGBA` is an optional parameter representing a pixel as a single number. In hex, the number is as follows: 0xRRGGBBAA, where RR is the red byte, GG the green byte, BB, the blue byte, and AA the alpha value. An AA of 0xFF is considered opaque, and all other AA values are treated as transparent.
+     */
 
     constructor(...args) {
         // don't confirm the number of args, because a subclass may have
@@ -50,6 +73,17 @@ class BitmapImage {
         }
     }
 
+    /**
+     * Copy a square portion of this image into another image. 
+     * 
+     * @param {BitmapImage} toImage Image into which to copy the square
+     * @param {number} toX x-coord in toImage of upper-left corner of receiving square
+     * @param {number} toY y-coord in toImage of upper-left corner of receiving square
+     * @param {number} fromX x-coord in this image of upper-left corner of source square
+     * @param {number} fromY y-coord in this image of upper-left corner of source square
+     * @return {BitmapImage} The present image to allow for chaining.
+     */
+
     blit(toImage, toX, toY, fromX, fromY, fromWidth, fromHeight) {
         if (fromX + fromWidth > this.bitmap.width) {
             throw new Error("copy exceeds width of source bitmap");
@@ -80,6 +114,13 @@ class BitmapImage {
         return this;
     }
 
+    /**
+     * Fills the image with a single color.
+     * 
+     * @param {number} rgba Color with which to fill image, expressed as a singlenumber in the form 0xRRGGBBAA, where AA is 0xFF for opaque and any other value for transparent.
+     * @return {BitmapImage} The present image to allow for chaining.
+     */
+
     fillRGBA(rgba) {
         const buf = this.bitmap.data;
         const bufByteWidth = this.bitmap.height * 4;
@@ -96,10 +137,24 @@ class BitmapImage {
         return this;
     }
 
+    /**
+     * Gets the RGBA number of the pixel at the given coordinate in the form 0xRRGGBBAA, where AA is the alpha value, with 0xFF being opaque.
+     * 
+     * @param {number} x x-coord of pixel
+     * @param {number} y y-coord of pixel
+     * @return {number} RGBA of pixel in 0xRRGGBBAA form
+     */
+
     getRGBA(x, y) {
         const bi = (y * this.bitmap.width + x) * 4;
         return this.bitmap.data.readUInt32BE(bi);
     }
+
+    /**
+     * Converts the image to greyscale using inferred Adobe metrics.
+     * 
+     * @return {BitmapImage} The present image to allow for chaining.
+     */
 
     greyscale() {
         const buf = this.bitmap.data;
@@ -115,6 +170,17 @@ class BitmapImage {
         });
         return this;
     }
+
+    /**
+     * Reframes the image as if placing a frame around the original image and replacing the original image with the newly framed image. When the new frame is strictly within the boundaries of the original image, this method crops the image. When any of the new boundaries exceed those of the original image, the `fillRGBA` must be provided to indicate the color with which to fill the extra space added to the image.
+     * 
+     * @param {number} xOffset The x-coord offset of the upper-left pixel of the desired image relative to the present image.
+     * @param {number} yOffset The y-coord offset of the upper-left pixel of the desired image relative to the present image.
+     * @param {number} width The width of the new image after reframing
+     * @param {number} height The height of the new image after reframing
+     * @param {number} fillRGBA The color with which to fill space added to the image as a result of the reframing, in 0xRRGGBBAA format, where AA is 0xFF to indicate opaque and any other value to indicate transparent. This parameter is only required when the reframing exceeds the original boundaries (i.e. does not simply perform a crop).
+     * @return {BitmapImage} The present image to allow for chaining.
+     */
 
     reframe(xOffset, yOffset, width, height, fillRGBA) {
         const cropX = (xOffset < 0 ? 0 : xOffset);
@@ -143,13 +209,19 @@ class BitmapImage {
         return this;
     }
 
-    scale(factor, mode) {
+    /**
+     * Scales the image size up by an integer factor. Each pixel of the original image becomes a square of the same color in the new image having a size of `factor` x `factor` pixels.
+     * 
+     * @param {number} factor The factor by which to scale up the image. Must be an integer >= 1.
+     * @return {BitmapImage} The present image to allow for chaining.
+     */
+
+    scale(factor) {
         if (factor === 1) {
             return;
         }
         if (!Number.isInteger(factor) || factor < 1) {
-            throw new Error(
-                    "the scale must be an integer >= 1 when there is no mode");
+            throw new Error("the scale must be an integer >= 1");
         }
         const sourceWidth = this.bitmap.width;
         const sourceHeight = this.bitmap.height;
@@ -183,6 +255,13 @@ class BitmapImage {
         return this;
     }
 
+    /**
+     * Scans all coordinates of the image, handing each in turn to the provided handler function.
+     *
+     * @param {function} scanHandler A function(x: number, y: number, bi: number) to be called for each pixel of the image with that pixel's x-coord, y-coord, and index into the `data` buffer. The function accesses the pixel at this coordinate by accessing the `this.data` at index `bi`.
+     * @see scanAllIndexes
+     */
+
     scanAllCoords(scanHandler) {
         const width = this.bitmap.width;
         const bufferLength = this.bitmap.data.length;
@@ -197,6 +276,13 @@ class BitmapImage {
             }
         }
     }
+
+    /**
+     * Scans all pixels of the image, handing the index of each in turn to the provided handler function. Runs a bit faster than `scanAllCoords()`, should the handler not need pixel coordinates.
+     *
+     * @param {function} scanHandler A function(bi: number) to be called for each pixel of the image with that pixel's index into the `data` buffer. The pixels is found at index 'bi' within `this.data`.
+     * @see scanAllCoords
+     */
 
     scanAllIndexes(scanHandler) {
         const bufferLength = this.bitmap.data.length;

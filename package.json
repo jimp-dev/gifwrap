@@ -4,7 +4,8 @@
   "description": "A Jimp-compatible library for working with GIF images",
   "main": "src/index.js",
   "scripts": {
-    "test": "mocha --timeout=5000 ./test/*.js"
+    "test": "mocha --timeout=5000 ./test/*.js",
+    "docs": "jsdoc2md --plugin dmd-clear --template templates/README.hbs src/index.js src/gif.js src/bitmapimage.js src/gifframe.js src/gifutil.js src/gifcodec.js > README.md"
   },
   "repository": {
     "type": "git",
@@ -28,6 +29,7 @@
   "dependencies": {},
   "devDependencies": {
     "chai": "^4.1.2",
+    "dmd-clear": "^0.1.2",
     "jimp": "^0.2.28"
   }
 }
