@@ -554,6 +554,7 @@ GifError is a class representing a GIF-related error
 MIT License
 
 Copyright © 2017 Joseph T. Lapp
+
 Copyright © 2013 Dean McNamee (default encoder/decoder omggif)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
