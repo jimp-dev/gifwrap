@@ -66,7 +66,7 @@ GIFs do not support partial transparency, so within `frame.bitmap.data`, the pix
 
 ```js
 const { GifUtil } = require('gifwrap');
-GifUtil.read("fancy.gif").then(inputGif =>
+GifUtil.read("fancy.gif").then(inputGif => {
 
     inputGif.frames.foreach(frame => {
 
