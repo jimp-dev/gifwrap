@@ -115,7 +115,7 @@ exports.getMaxDimensions = function (frames) {
  * @function read
  * @memberof GifUtil
  * @param {string|Buffer} source Source to decode. When a string, it's the GIF filename to load and parse. When a Buffer, it's an encoded GIF to parse.
- * @param {object} An optional GIF decoder object implementing the `decode` method of class GifCodec. When provided, the method decodes the GIF using this decoder. When not provided, the method uses GifCodec.
+ * @param {object} decoder An optional GIF decoder object implementing the `decode` method of class GifCodec. When provided, the method decodes the GIF using this decoder. When not provided, the method uses GifCodec.
  * @return {Promise} A Promise that resolves to an instance of the Gif class, representing the decoded GIF.
  */
 

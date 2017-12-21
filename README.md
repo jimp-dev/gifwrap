@@ -194,7 +194,7 @@ GifUtil.read("fancy.gif", new SnazzyDecoder()).then(gif =>
 
 ## API Reference
 
-The `gifwrap` module provides the following classes and namespaces:  
+The [Typescript typings](https://github.com/jtlapp/gifwrap/blob/master/index.d.ts) provide an exact specification of the API and also serve as a cheat sheet. The classes and namespaces follow:
 
 * **gifwrap**
 
@@ -244,7 +244,7 @@ The `gifwrap` module provides the following classes and namespaces:
 
     * [.getMaxDimensions(frames)](#GifUtil.getMaxDimensions)
 
-    * [.read(source, An)](#GifUtil.read)
+    * [.read(source, decoder)](#GifUtil.read)
 
     * [.write(path, frames, spec, encoder)](#GifUtil.write)
 
@@ -477,12 +477,12 @@ getMaxDimensions() returns the pixel width and height required to accommodate al
 **Returns**: <code>object</code> - An object of the form {maxWidth, maxHeight} indicating the maximum width and height required to accommodate all frames.  
 <a name="GifUtil.read"></a>
 
-### *GifUtil*.read(source, An)
+### *GifUtil*.read(source, decoder)
 
 | Param | Type | Description |
 | --- | --- | --- |
 | source | <code>string</code> \| <code>Buffer</code> | Source to decode. When a string, it's the GIF filename to load and parse. When a Buffer, it's an encoded GIF to parse. |
-| An | <code>object</code> | optional GIF decoder object implementing the `decode` method of class GifCodec. When provided, the method decodes the GIF using this decoder. When not provided, the method uses GifCodec. |
+| decoder | <code>object</code> | An optional GIF decoder object implementing the `decode` method of class GifCodec. When provided, the method decodes the GIF using this decoder. When not provided, the method uses GifCodec. |
 
 read() decodes an encoded GIF, whether provided as a filename or as a byte buffer.
 
