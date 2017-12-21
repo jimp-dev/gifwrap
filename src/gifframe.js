@@ -26,11 +26,11 @@ class GifFrame extends BitmapImage {
      * 
      * Its constructor supports the following signatures:
      * 
-     * new GifFrame(bitmap: {width: number, height: number, data: Buffer}, options?)
-     * new GifFrame(bitmapImage: BitmapImage, options?)
-     * new GifFrame(width: number, height: number, buffer: Buffer, options?)
-     * new GifFrame(width: number, height: number, backgroundRGBA?: number, options?)
-     * new GifFrame(frame: GifFrame)
+     * * new GifFrame(bitmap: {width: number, height: number, data: Buffer}, options?)
+     * * new GifFrame(bitmapImage: BitmapImage, options?)
+     * * new GifFrame(width: number, height: number, buffer: Buffer, options?)
+     * * new GifFrame(width: number, height: number, backgroundRGBA?: number, options?)
+     * * new GifFrame(frame: GifFrame)
      * 
      * See the base class BitmapImage for a discussion of all parameters but `options` and `frame`. `options` is an optional argument providing initial values for the above-listed GifFrame properties. Each property within option is itself optional.
      * 

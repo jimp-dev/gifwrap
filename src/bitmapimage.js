@@ -15,10 +15,10 @@ class BitmapImage {
      *
      * Its constructor supports the following signatures:
      *
-     * new BitmapImage(bitmap: { width: number, height: number, data: Buffer })
-     * new BitmapImage(bitmapImage: BitmapImage)
-     * new BitmapImage(width: number, height: number, buffer: Buffer)
-     * new BitmapImage(width: number, height: number, backgroundRGBA?: number)
+     * * new BitmapImage(bitmap: { width: number, height: number, data: Buffer })
+     * * new BitmapImage(bitmapImage: BitmapImage)
+     * * new BitmapImage(width: number, height: number, buffer: Buffer)
+     * * new BitmapImage(width: number, height: number, backgroundRGBA?: number)
      * 
      * When a `BitmapImage` is provided, the constructed `BitmapImage` is a deep clone of the provided one, so that each image's pixel data can subsequently be modified without affecting each other.
      *

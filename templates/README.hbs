@@ -123,7 +123,7 @@ codec.decodeGif(byteEncodingBuffer).then(sourceGif => {
 });
 ```
 
-Notice that both encoding and decoding yields a GIF object. This is an instance of class Gif, and it provides information about the GIF, such as its size and how many times it loops. Notice also that you never call the Gif constructor to create a GIF. Instead, GIFs are created by providing a GifFrame array and a specification of GIF options. That specification is a subset of the properties of a Gif, so you can pass a previously-loaded Gif as a specification when writing or encoding. The spec only includes the properties that can't be inferred from the frames -- namely, how many times the GIF loops and how to attempt to package the color tables within the encoding.
+Notice that both encoding and decoding yields a GIF object. This is an instance of class Gif, and it provides information about the GIF, such as its size and how many times it loops. Notice also that you never call the Gif constructor to create a GIF. Instead, GIFs are created by providing a GifFrame array and a specification of GIF options. That specification is a subset of the properties of a Gif, so you can pass a previously-loaded Gif as a specification when writing or encoding. The encoder only uses the properties that can't be inferred from the frames -- namely, how many times the GIF loops and how to attempt to package the color tables within the encoding.
 
 ## Leveraging Jimp
 

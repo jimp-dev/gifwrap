@@ -123,7 +123,7 @@ codec.decodeGif(byteEncodingBuffer).then(sourceGif => {
 });
 ```
 
-Notice that both encoding and decoding yields a GIF object. This is an instance of class Gif, and it provides information about the GIF, such as its size and how many times it loops. Notice also that you never call the Gif constructor to create a GIF. Instead, GIFs are created by providing a GifFrame array and a specification of GIF options. That specification is a subset of the properties of a Gif, so you can pass a previously-loaded Gif as a specification when writing or encoding. The spec only includes the properties that can't be inferred from the frames -- namely, how many times the GIF loops and how to attempt to package the color tables within the encoding.
+Notice that both encoding and decoding yields a GIF object. This is an instance of class Gif, and it provides information about the GIF, such as its size and how many times it loops. Notice also that you never call the Gif constructor to create a GIF. Instead, GIFs are created by providing a GifFrame array and a specification of GIF options. That specification is a subset of the properties of a Gif, so you can pass a previously-loaded Gif as a specification when writing or encoding. The encoder only uses the properties that can't be inferred from the frames -- namely, how many times the GIF loops and how to attempt to package the color tables within the encoding.
 
 ## Leveraging Jimp
 
@@ -297,10 +297,10 @@ bitmap.data | a Buffer whose every four bytes represents a pixel, each sequentia
 
 Its constructor supports the following signatures:
 
-new BitmapImage(bitmap: { width: number, height: number, data: Buffer })
-new BitmapImage(bitmapImage: BitmapImage)
-new BitmapImage(width: number, height: number, buffer: Buffer)
-new BitmapImage(width: number, height: number, backgroundRGBA?: number)
+* new BitmapImage(bitmap: { width: number, height: number, data: Buffer })
+* new BitmapImage(bitmapImage: BitmapImage)
+* new BitmapImage(width: number, height: number, buffer: Buffer)
+* new BitmapImage(width: number, height: number, backgroundRGBA?: number)
 
 When a `BitmapImage` is provided, the constructed `BitmapImage` is a deep clone of the provided one, so that each image's pixel data can subsequently be modified without affecting each other.
 
@@ -413,11 +413,11 @@ interlaced | boolean indicating whether the frame renders interlaced
 
 Its constructor supports the following signatures:
 
-new GifFrame(bitmap: {width: number, height: number, data: Buffer}, options?)
-new GifFrame(bitmapImage: BitmapImage, options?)
-new GifFrame(width: number, height: number, buffer: Buffer, options?)
-new GifFrame(width: number, height: number, backgroundRGBA?: number, options?)
-new GifFrame(frame: GifFrame)
+* new GifFrame(bitmap: {width: number, height: number, data: Buffer}, options?)
+* new GifFrame(bitmapImage: BitmapImage, options?)
+* new GifFrame(width: number, height: number, buffer: Buffer, options?)
+* new GifFrame(width: number, height: number, backgroundRGBA?: number, options?)
+* new GifFrame(frame: GifFrame)
 
 See the base class BitmapImage for a discussion of all parameters but `options` and `frame`. `options` is an optional argument providing initial values for the above-listed GifFrame properties. Each property within option is itself optional.
 
