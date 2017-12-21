@@ -1,4 +1,6 @@
 
+export type ByteArray = Uint8Array | Buffer;
+
 export interface OmggifModule {
     GifWriter: GifWriter;
     GifReader: GifReader;
@@ -18,16 +20,19 @@ export interface FrameOptions {
 }
 
 export interface GifWriter {
-
-    new (buffer: Buffer, width: number, height: number, gopts?: GlobalOptions): GifWriter;
-    addFrame(x: number, y: number, width: number, height: number, indexedPixels: number[], opts?: FrameOptions): void;
+    new (buffer: ByteArray, width: number, height: number, gopts?: GlobalOptions): GifWriter;
+    addFrame(x: number, y: number, width: number, height: number, indexedPixels: number[], opts?: FrameOptions): number; // returns size of buffer at end of frame
+    getOutputBuffer(): ByteArray;
+    setOutputBuffer(buffer: ByteArray): void;
+    getOutputBufferPosition(): number;
+    setOutputBufferPosition(position: number): void;
     end(): number; // ends GIF and returns size of buffer
 }
 
 export interface GifReader {
     width: number;
     height: number;
-    new (buffer: Buffer): GifReader;
+    new (buffer: ByteArray): GifReader;
     numFrames(): number;
     loopCount(): number;
     frameInfo(frameNumber: number): FrameInfo;

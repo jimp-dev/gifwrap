@@ -26,7 +26,9 @@
     "url": "https://github.com/jtlapp/gifwrap/issues"
   },
   "homepage": "https://github.com/jtlapp/gifwrap#readme",
-  "dependencies": {},
+  "dependencies": {
+    "omggif": "^1.0.9"
+  },
   "devDependencies": {
     "chai": "^4.1.2",
     "dmd-clear": "^0.1.2",

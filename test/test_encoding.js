@@ -102,6 +102,30 @@ describe("multi-frame encoding", () => {
             return _encodeDecodeFile(name, Gif.GlobalColorsOnly);
         });
     });
+
+    it("encodes large multiframe files w/ forced buffer-size scaling (1)", () => {
+
+        const scalingCodec = new GifCodec();
+        scalingCodec._testInitialBufferSize = 2048; // big enough for header
+        const name = 'nburling-public';
+
+        return _encodeDecodeFile(name, Gif.LocalColorsOnly, scalingCodec)
+        .then(() => {
+            return _encodeDecodeFile(name, Gif.GlobalColorsOnly, scalingCodec);
+        });
+    });
+
+    it("encodes large multiframe files w/ forced buffer-size scaling (2)", () => {
+
+        const scalingCodec = new GifCodec();
+        scalingCodec._testInitialBufferSize = 2048; // big enough for header
+
+        const name = 'rnaples-offsets-public';
+        return _encodeDecodeFile(name, Gif.LocalColorsOnly, scalingCodec)
+        .then(() => {
+            return _encodeDecodeFile(name, Gif.GlobalColorsOnly, scalingCodec);
+        });
+    });
 });
 
 describe("encoding GlobalColorsPreferred", () => {
@@ -248,23 +272,25 @@ function _compareGifs(actual, expected, filename, note) {
     }
 }
 
-function _encodeDecodeFile(filename, colorScope) {
+function _encodeDecodeFile(filename, colorScope, codec) {
     let expectedGif;
-    return GifUtil.read(Tools.getGifPath(filename))
+    codec = codec || defaultCodec;
+
+    return GifUtil.read(Tools.getGifPath(filename), codec)
     .then(readGif => {
 
         expectedGif = readGif;
-        return defaultCodec.encodeGif(readGif.frames, 
+        return codec.encodeGif(readGif.frames, 
                 { loops: readGif.loops, colorScope: colorScope });
     })
     .then(encodedGif => {
 
         _compareGifs(encodedGif, expectedGif, filename,
                 `encoded == read (colorScope ${colorScope})`);
-        return defaultCodec.decodeGif(encodedGif.buffer);
+        return codec.decodeGif(encodedGif.buffer);
     })
     .then(decodedGif => {
-
+    
         _compareGifs(decodedGif, expectedGif, filename,
                 `decoded == read (colorScope ${colorScope})`);
     })

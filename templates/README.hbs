@@ -6,7 +6,7 @@ A Jimp-compatible library for working with GIFs
 
 `gifwrap` is a minimalist library for working with GIFs in Javascript, supporting both single- and multi-frame GIFs. It reads GIFs into an internal representation that's easy to work with and allows for making GIFs from scratch. The frame class is structured to make it easy to move images between [`Jimp`](https://github.com/oliver-moran/jimp) and `gifwrap` for more sophisticated image manipulation in `Jimp`, but the module has no dependency on `Jimp`.
 
-The library uses Dean McNamee's [`omggif`](https://github.com/deanm/omggif) GIF encoder/decoder by default (locally tweaked), but it employs an abstraction that allows using other encoders and decoders as well, once suitably wrapped.
+The library uses Dean McNamee's [`omggif`](https://github.com/deanm/omggif) GIF encoder/decoder by default, but it employs an abstraction that allows using other encoders and decoders as well, once suitably wrapped.
 
 At present, the module only works in Node.js. Includes Typescript typings.
 
@@ -171,7 +171,7 @@ You may want to create helper functions to encapsulate this behavior. In order t
 
 `gifwrap` provides a default GIF encoder/decoder, but it is architected to be able to work with other encoders and decoders. The encoder and decoder may even be separate implementations. Encoders and decoders have varying capabilities, performance measures, and levels of reliability.
 
-GifCodec is the default implementation, and it's both an encoder and a decoder. It's an adapter that wraps a locally-modified version of the [`omggif`](https://github.com/deanm/omggif) module. It appears to support a broad variety of GIFs, although it cannot produce an interlaced encoding (which there is little need for anyway). The `gifwrap` test suite also happens to serve as a test suite for `omggif`, by virtue of using `omggif` underneath. It revealed very few and only minor issues, which the local copy of `omggif` corrects.
+GifCodec is the default implementation, and it's both an encoder and a decoder. It's an adapter that wraps the [`omggif`](https://github.com/deanm/omggif) module. `omggif` appears to support a broad variety of GIFs, although it cannot produce an interlaced encoding (which there is little need for anyway). Although `omggif` doesn't include a test suite at present, `gifwrap`'s test suite happens to test it reasonably well by virtue of using `omggif` underneath.
 
 An encoder need only implement GifCodec's [`encodeGif()`](#GifCodec+encodeGif) method, and a decoder need only implement its [`decodeGif()`](#GifCodec+decodeGif) method. See the descriptions of those methods for the requirement details. Although GifCodec is stateless, so that instances an be reused across multiple encodings and decodings, third party encoders and decoders need not be. However, applications that use the library with stateful encoders will need to be aware of the need to create new instances.
 
@@ -251,8 +251,6 @@ The `gifwrap` module provides the following classes and namespaces:
 MIT License
 
 Copyright © 2017 Joseph T. Lapp
-
-Copyright © 2013 Dean McNamee (default encoder/decoder omggif)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
