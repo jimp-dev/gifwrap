@@ -3,6 +3,8 @@
 /** @namespace GifUtil */
 
 const fs = require('fs');
+const ImageQ = require('image-q');
+
 const { GifFrame } = require('./gifframe');
 const { GifError } = require('./gif');
 const { GifCodec } = require('./gifcodec');
@@ -110,6 +112,85 @@ exports.getMaxDimensions = function (frames) {
 };
 
 /**
+ * Quantizes colors so that there are at most a given number of color indexes (including transparency) across all provided images. Uses an algorithm by Anthony Dekker.
+ * 
+ * The method treats different RGBA combinations as different colors, so if the frame has multiple alpha values or multiple RGB values for an alpha value, the caller may first want to normalize them by converting all transparent pixels to the same RGBA values.
+ * 
+ * The method may increase the number of colors if there are fewer than the provided maximum.
+ * 
+ * @param {BitmapImage|BitmapImage[]} imageOrImages Image or array of images (such as GifFrame instances) to be color-quantized. Quantizing across multiple images ensures color consistency from frame to frame.
+ * @param {number} maxColorIndexes The maximum number of color indexes that will exist in the palette after completing quantization. Defaults to 256.
+ * @param {object} dither (optional) An object configuring the dithering to apply. The properties are as followings, imported from the [`image-q` package](https://github.com/ibezkrovnyi/image-quantization) without explanation:
+ * - ditherAlgorithm - One of 'FloydSteinberg' | 'FalseFloydSteinberg' | 'Stucki' | 'Atkinson' 'Jarvis' | 'Burkes' | 'Sierra' | 'TwoSierra' | 'SierraLite'.
+ * - minimumColorDistanceToDither - (optional) A number defaulting to 0.
+ * - serpentine - (optional) A boolean defaulting to true.
+ * - calculateErrorLikeGIMP - (optional) A boolean defaulting to false.
+ * @see quantizeSorokin
+ * @see quantizeWu
+ */
+
+exports.quantizeDekker = function (imageOrImages, maxColorIndexes, dither) {
+    maxColorIndexes = maxColorIndexes || 256;
+    _quantize(imageOrImages, 'NeuQuantFloat', maxColorIndexes, 0, dither);
+}
+
+/**
+ * Quantizes colors so that there are at most a given number of color indexes (including transparency) across all provided images. Uses an algorithm by Leon Sorokin. This quantization method differs from the other two by likely never increasing the number of colors, should there be fewer than the provided maximum.
+ * 
+ * The method treats different RGBA combinations as different colors, so if the frame has multiple alpha values or multiple RGB values for an alpha value, the caller may first want to normalize them by converting all transparent pixels to the same RGBA values.
+ * 
+ * @param {BitmapImage|BitmapImage[]} imageOrImages Image or array of images (such as GifFrame instances) to be color-quantized. Quantizing across multiple images ensures color consistency from frame to frame.
+ * @param {number} maxColorIndexes The maximum number of color indexes that will exist in the palette after completing quantization. Defaults to 256.
+ * @param {string} histogram (optional) Histogram method: 'top-pop' for global top-population, 'min-pop' for minimum-population threshhold within subregions. Defaults to 'min-pop'.
+ * @param {object} dither (optional) An object configuring the dithering to apply, as explained for `quantizeDekker()`.
+ * @see quantizeDekker
+ * @see quantizeWu
+ */
+
+exports.quantizeSorokin = function (imageOrImages, maxColorIndexes, histogram, dither) {
+    maxColorIndexes = maxColorIndexes || 256;
+    histogram = histogram || 'min-pop';
+    let histogramID;
+    switch (histogram) {
+        case 'min-pop':
+        histogramID = 2;
+        break;
+
+        case 'top-pop':
+        histogramID = 1;
+        break
+
+        default:
+        throw new Error(`Invalid quantizeSorokin histogram '${histogram}'`);
+    }
+    _quantize(imageOrImages, 'RGBQuant', maxColorIndexes, histogramID, dither);
+}
+
+/**
+ * Quantizes colors so that there are at most a given number of color indexes (including transparency) across all provided images. Uses an algorithm by Xiaolin Wu.
+ * 
+ * The method treats different RGBA combinations as different colors, so if the frame has multiple alpha values or multiple RGB values for an alpha value, the caller may first want to normalize them by converting all transparent pixels to the same RGBA values.
+ * 
+ * The method may increase the number of colors if there are fewer than the provided maximum.
+ * 
+ * @param {BitmapImage|BitmapImage[]} imageOrImages Image or array of images (such as GifFrame instances) to be color-quantized. Quantizing across multiple images ensures color consistency from frame to frame.
+ * @param {number} maxColorIndexes The maximum number of color indexes that will exist in the palette after completing quantization. Defaults to 256.
+ * @param {number} significantBits (optional) This is the number of significant high bits in each RGB color channel. Takes integer values from 1 through 8. Higher values correspond to higher quality. Defaults to 5.
+ * @param {object} dither (optional) An object configuring the dithering to apply, as explained for `quantizeDekker()`.
+ * @see quantizeDekker
+ * @see quantizeSorokin
+ */
+
+exports.quantizeWu = function (imageOrImages, maxColorIndexes, significantBits, dither) {
+    maxColorIndexes = maxColorIndexes || 256;
+    significantBits = significantBits || 5;
+    if (significantBits < 1 || significantBits > 8) {
+        throw new Error("Invalid quantization quality");
+    }
+    _quantize(imageOrImages, 'WuQuant', maxColorIndexes, significantBits, dither);
+}
+
+/**
  * read() decodes an encoded GIF, whether provided as a filename or as a byte buffer.
  * 
  * @function read
@@ -162,6 +243,78 @@ exports.write = function (path, frames, spec, encoder) {
         });
     });
 };
+
+function _quantize(imageOrImages, method, maxColorIndexes, modifier, dither) {
+    const images = Array.isArray(imageOrImages) ? imageOrImages : [imageOrImages];
+    const ditherAlgs = [
+        'FloydSteinberg',
+        'FalseFloydSteinberg',
+        'Stucki',
+        'Atkinson',
+        'Jarvis',
+        'Burkes',
+        'Sierra',
+        'TwoSierra',
+        'SierraLite'
+    ];
+
+    if (dither) {
+        if (ditherAlgs.indexOf(dither.ditherAlgorithm) < 0) {
+            throw new Error(`Invalid ditherAlgorithm '${dither.ditherAlgorithm}'`);
+        }
+        if (dither.serpentine === undefined) {
+            dither.serpentine = true;
+        }
+        if (dither.minimumColorDistanceToDither === undefined) {
+            dither.minimumColorDistanceToDither = 0;
+        }
+        if (dither.calculateErrorLikeGIMP === undefined) {
+            dither.calculateErrorLikeGIMP = false;
+        }
+    }
+
+    const distCalculator = new ImageQ.distance.Euclidean();
+    const quantizer = new ImageQ.palette[method](distCalculator, maxColorIndexes, modifier);
+    let imageMaker;
+    if (dither) {
+        imageMaker = new ImageQ.image.ErrorDiffusionArray(
+            distCalculator,
+            ImageQ.image.ErrorDiffusionArrayKernel[dither.ditherAlgorithm],
+            dither.serpentine,
+            dither.minimumColorDistanceToDither,
+            dither.calculateErrorLikeGIMP
+        );
+    }
+    else {
+        imageMaker = new ImageQ.image.NearestColor(distCalculator);
+    }
+
+    const inputContainers = [];
+    images.forEach(image => {
+
+        const imageBuf = image.bitmap.data;
+        const inputBuf = new ArrayBuffer(imageBuf.length);
+        const inputArray = new Uint32Array(inputBuf);
+        for (let bi = 0, ai = 0; bi < imageBuf.length; bi += 4, ++ai) {
+            inputArray[ai] = imageBuf.readUInt32LE(bi, true);
+        }
+        const inputContainer = ImageQ.utils.PointContainer.fromUint32Array(
+                inputArray, image.bitmap.width, image.bitmap.height);
+        quantizer.sample(inputContainer);
+        inputContainers.push(inputContainer);
+    });
+    
+    const limitedPalette = quantizer.quantize();
+
+    for (let i = 0; i < images.length; ++i) {
+        const imageBuf = images[i].bitmap.data;
+        const outputContainer = imageMaker.quantize(inputContainers[i], limitedPalette);
+        const outputArray = outputContainer.toUint32Array();
+        for (let bi = 0, ai = 0; bi < imageBuf.length; bi += 4, ++ai) {
+            imageBuf.writeUInt32LE(outputArray[ai], bi);
+        }
+    }
+}
 
 function _readBinary(path) {
     // TBD: add support for URLs

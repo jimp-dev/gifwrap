@@ -119,7 +119,31 @@ export namespace GifUtil {
         palettes: GifPalette[]
     }
     function getMaxDimensions(frames: GifFrame[]): { maxWidth: number, maxHeight: number };
+    function quantizeDekker(imageOrImages: BitmapImage|BitmapImage[], maxColorIndexes: number,
+            dither?: Dither): this;
+    function quantizeSorokin(imageOrImages: BitmapImage|BitmapImage[], maxColorIndexes: number,
+            histogram?: string, dither?: Dither): this;
+    function quantizeWu(imageOrImages: BitmapImage|BitmapImage[], maxColorIndexes: number,
+            significantBits?: number, dither?: Dither): this;
     function read(source: string|Buffer, decoder?: GifDecoder): Promise<Gif>;
     function write(path: string, frames: GifFrame[], spec?: GifSpec, encoder?: GifEncoder):
             Promise<Gif>;
 }
+
+export type DitherAlgorithm = 
+    'FloydSteinberg' |
+    'FalseFloydSteinberg' |
+    'Stucki' |
+    'Atkinson' |
+    'Jarvis' |
+    'Burkes' |
+    'Sierra' |
+    'TwoSierra' |
+    'SierraLite';
+
+export type Dither = {
+    ditherAlgorithm: DitherAlgorithm,
+    minimumColorDistanceToDither?: number, // default = 0
+    serpentine?: boolean, // default = true
+    calculateErrorLikeGIMP?: boolean // default = false
+};

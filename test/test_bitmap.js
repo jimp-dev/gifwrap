@@ -92,6 +92,71 @@ describe("GifFrame bad construction behavior", () => {
     });
 });
 
+describe("BitmapImage palette", () => {
+
+    it("is monocolor without transparency", (done) => {
+
+        const bitmap = Tools.getBitmap('singleFrameMonoOpaque');
+        const f = new BitmapImage(bitmap);
+        const p = f.getPalette();
+        assert.deepStrictEqual(p.colors, [0xFF0000]);
+        assert.strictEqual(p.usesTransparency, false);
+        done();
+    });
+
+    it("includes two colors without transparency", (done) => {
+
+        const bitmap = Tools.getBitmap('singleFrameBWOpaque');
+        const f = new BitmapImage(bitmap);
+        const p = f.getPalette();
+        assert.deepStrictEqual(p.colors, [0x000000, 0xffffff]);
+        assert.strictEqual(p.usesTransparency, false);
+        done();
+    });
+
+    it("includes multiple colors without transparency", (done) => {
+
+        const bitmap = Tools.getBitmap('singleFrameMultiOpaque');
+        const f = new BitmapImage(bitmap);
+        const p = f.getPalette();
+        assert.deepStrictEqual(p.colors,
+                [0x0000ff, 0x00ff00, 0xff0000, 0xffffff]);
+        assert.strictEqual(p.usesTransparency, false);
+        done();
+    });
+
+    it("has only transparency", (done) => {
+
+        const bitmap = Tools.getBitmap('singleFrameNoColorTrans');
+        const f = new BitmapImage(bitmap);
+        const p = f.getPalette();
+        assert.deepStrictEqual(p.colors, []);
+        assert.strictEqual(p.usesTransparency, true);
+        done();
+    });
+
+    it("is monocolor with transparency", (done) => {
+
+        const bitmap = Tools.getBitmap('singleFrameMonoTrans');
+        const f = new BitmapImage(bitmap);
+        const p = f.getPalette();
+        assert.deepStrictEqual(p.colors, [0x00ff00]);
+        assert.strictEqual(p.usesTransparency, true);
+        done();
+    });
+
+    it("includes multiple colors with transparency", (done) => {
+
+        const bitmap = Tools.getBitmap('singleFrameMultiTrans');
+        const f = new BitmapImage(bitmap);
+        const p = f.getPalette();
+        assert.deepStrictEqual(p.colors,
+                [0x000000, 0x0000ff, 0x00ff00, 0xff0000]);
+        assert.strictEqual(p.usesTransparency, true);
+        done();
+    });
+});
+
 // TBD: test BitmapImage transformation methods
 
 describe("Jimp compatibility", () => {
@@ -100,6 +165,7 @@ describe("Jimp compatibility", () => {
 
         new Jimp(SAMPLE_PNG_PATH, (err, j1) => {
 
+            if (err) return done(err);
             assert.strictEqual(err, null);
             const initialColor = j1.getPixelColor(5, 5);
             const i = new BitmapImage(j1.bitmap);
