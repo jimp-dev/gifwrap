@@ -122,11 +122,11 @@ export namespace GifUtil {
     }
     function getMaxDimensions(frames: GifFrame[]): { maxWidth: number, maxHeight: number };
     function quantizeDekker(imageOrImages: BitmapImage|BitmapImage[], maxColorIndexes: number,
-            dither?: Dither): this;
+            dither?: Dither): void;
     function quantizeSorokin(imageOrImages: BitmapImage|BitmapImage[], maxColorIndexes: number,
-            histogram?: string, dither?: Dither): this;
+            histogram?: string, dither?: Dither): void;
     function quantizeWu(imageOrImages: BitmapImage|BitmapImage[], maxColorIndexes: number,
-            significantBits?: number, dither?: Dither): this;
+            significantBits?: number, dither?: Dither): void;
     function read(source: string|Buffer, decoder?: GifDecoder): Promise<Gif>;
     function write(path: string, frames: GifFrame[], spec?: GifSpec, encoder?: GifEncoder):
             Promise<Gif>;
