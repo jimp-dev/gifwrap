@@ -199,10 +199,10 @@ The [Typescript typings](https://github.com/jtlapp/gifwrap/blob/master/index.d.t
 * **gifwrap**
 
     * [.**Gif**](#new_Gif_new)
-    * [.**BitmapImage**](#new_BitmapImage_new)
-    * [.**GifFrame**](#new_GifFrame_new)
-    * [.**GifUtil**](#TBD)
-    * [.**GifCodec**](#new_GifCodec_new)
+    * [.**BitmapImage**](#BitmapImage)
+    * [.**GifFrame**](#GifFrame)
+    * [.**GifUtil**](#GifUtil)
+    * [.**GifCodec**](#GifCodec)
     * [.**GifError**](#new_GifError_new)
 
 
@@ -245,6 +245,12 @@ The [Typescript typings](https://github.com/jtlapp/gifwrap/blob/master/index.d.t
     * [.getColorInfo(frames, maxGlobalIndex)](#GifUtil.getColorInfo)
 
     * [.getMaxDimensions(frames)](#GifUtil.getMaxDimensions)
+
+    * [.quantizeDekker(imageOrImages, maxColorIndexes, dither)](#GifUtil.quantizeDekker)
+
+    * [.quantizeSorokin(imageOrImages, maxColorIndexes, histogram, dither)](#GifUtil.quantizeSorokin)
+
+    * [.quantizeWu(imageOrImages, maxColorIndexes, significantBits, dither)](#GifUtil.quantizeWu)
 
     * [.read(source, decoder)](#GifUtil.read)
 
@@ -483,6 +489,54 @@ getColorInfo() gets information about the colors used in the provided frames. Th
 getMaxDimensions() returns the pixel width and height required to accommodate all of the provided frames, according to the offsets and dimensions of each frame.
 
 **Returns**: <code>object</code> - An object of the form {maxWidth, maxHeight} indicating the maximum width and height required to accommodate all frames.  
+<a name="GifUtil.quantizeDekker"></a>
+
+### *GifUtil*.quantizeDekker(imageOrImages, maxColorIndexes, dither)
+
+| Param | Type | Description |
+| --- | --- | --- |
+| imageOrImages | [<code>BitmapImage</code>](#BitmapImage) \| [<code>Array.&lt;BitmapImage&gt;</code>](#BitmapImage) | Image or array of images (such as GifFrame instances) to be color-quantized. Quantizing across multiple images ensures color consistency from frame to frame. |
+| maxColorIndexes | <code>number</code> | The maximum number of color indexes that will exist in the palette after completing quantization. Defaults to 256. |
+| dither | <code>object</code> | (optional) An object configuring the dithering to apply. The properties are as followings, imported from the [`image-q` package](https://github.com/ibezkrovnyi/image-quantization) without explanation: - ditherAlgorithm - One of 'FloydSteinberg' | 'FalseFloydSteinberg' | 'Stucki' | 'Atkinson' 'Jarvis' | 'Burkes' | 'Sierra' | 'TwoSierra' | 'SierraLite'. - minimumColorDistanceToDither - (optional) A number defaulting to 0. - serpentine - (optional) A boolean defaulting to true. - calculateErrorLikeGIMP - (optional) A boolean defaulting to false. |
+
+Quantizes colors so that there are at most a given number of color indexes (including transparency) across all provided images. Uses an algorithm by Anthony Dekker.
+
+The method treats different RGBA combinations as different colors, so if the frame has multiple alpha values or multiple RGB values for an alpha value, the caller may first want to normalize them by converting all transparent pixels to the same RGBA values.
+
+The method may increase the number of colors if there are fewer than the provided maximum.
+
+<a name="GifUtil.quantizeSorokin"></a>
+
+### *GifUtil*.quantizeSorokin(imageOrImages, maxColorIndexes, histogram, dither)
+
+| Param | Type | Description |
+| --- | --- | --- |
+| imageOrImages | [<code>BitmapImage</code>](#BitmapImage) \| [<code>Array.&lt;BitmapImage&gt;</code>](#BitmapImage) | Image or array of images (such as GifFrame instances) to be color-quantized. Quantizing across multiple images ensures color consistency from frame to frame. |
+| maxColorIndexes | <code>number</code> | The maximum number of color indexes that will exist in the palette after completing quantization. Defaults to 256. |
+| histogram | <code>string</code> | (optional) Histogram method: 'top-pop' for global top-population, 'min-pop' for minimum-population threshhold within subregions. Defaults to 'min-pop'. |
+| dither | <code>object</code> | (optional) An object configuring the dithering to apply, as explained for `quantizeDekker()`. |
+
+Quantizes colors so that there are at most a given number of color indexes (including transparency) across all provided images. Uses an algorithm by Leon Sorokin. This quantization method differs from the other two by likely never increasing the number of colors, should there be fewer than the provided maximum.
+
+The method treats different RGBA combinations as different colors, so if the frame has multiple alpha values or multiple RGB values for an alpha value, the caller may first want to normalize them by converting all transparent pixels to the same RGBA values.
+
+<a name="GifUtil.quantizeWu"></a>
+
+### *GifUtil*.quantizeWu(imageOrImages, maxColorIndexes, significantBits, dither)
+
+| Param | Type | Description |
+| --- | --- | --- |
+| imageOrImages | [<code>BitmapImage</code>](#BitmapImage) \| [<code>Array.&lt;BitmapImage&gt;</code>](#BitmapImage) | Image or array of images (such as GifFrame instances) to be color-quantized. Quantizing across multiple images ensures color consistency from frame to frame. |
+| maxColorIndexes | <code>number</code> | The maximum number of color indexes that will exist in the palette after completing quantization. Defaults to 256. |
+| significantBits | <code>number</code> | (optional) This is the number of significant high bits in each RGB color channel. Takes integer values from 1 through 8. Higher values correspond to higher quality. Defaults to 5. |
+| dither | <code>object</code> | (optional) An object configuring the dithering to apply, as explained for `quantizeDekker()`. |
+
+Quantizes colors so that there are at most a given number of color indexes (including transparency) across all provided images. Uses an algorithm by Xiaolin Wu.
+
+The method treats different RGBA combinations as different colors, so if the frame has multiple alpha values or multiple RGB values for an alpha value, the caller may first want to normalize them by converting all transparent pixels to the same RGBA values.
+
+The method may increase the number of colors if there are fewer than the provided maximum.
+
 <a name="GifUtil.read"></a>
 
 ### *GifUtil*.read(source, decoder)

@@ -118,6 +118,8 @@ exports.getMaxDimensions = function (frames) {
  * 
  * The method may increase the number of colors if there are fewer than the provided maximum.
  * 
+ * @function quantizeDekker
+ * @memberof GifUtil
  * @param {BitmapImage|BitmapImage[]} imageOrImages Image or array of images (such as GifFrame instances) to be color-quantized. Quantizing across multiple images ensures color consistency from frame to frame.
  * @param {number} maxColorIndexes The maximum number of color indexes that will exist in the palette after completing quantization. Defaults to 256.
  * @param {object} dither (optional) An object configuring the dithering to apply. The properties are as followings, imported from the [`image-q` package](https://github.com/ibezkrovnyi/image-quantization) without explanation:
@@ -125,8 +127,6 @@ exports.getMaxDimensions = function (frames) {
  * - minimumColorDistanceToDither - (optional) A number defaulting to 0.
  * - serpentine - (optional) A boolean defaulting to true.
  * - calculateErrorLikeGIMP - (optional) A boolean defaulting to false.
- * @see quantizeSorokin
- * @see quantizeWu
  */
 
 exports.quantizeDekker = function (imageOrImages, maxColorIndexes, dither) {
@@ -139,12 +139,12 @@ exports.quantizeDekker = function (imageOrImages, maxColorIndexes, dither) {
  * 
  * The method treats different RGBA combinations as different colors, so if the frame has multiple alpha values or multiple RGB values for an alpha value, the caller may first want to normalize them by converting all transparent pixels to the same RGBA values.
  * 
+ * @function quantizeSorokin
+ * @memberof GifUtil
  * @param {BitmapImage|BitmapImage[]} imageOrImages Image or array of images (such as GifFrame instances) to be color-quantized. Quantizing across multiple images ensures color consistency from frame to frame.
  * @param {number} maxColorIndexes The maximum number of color indexes that will exist in the palette after completing quantization. Defaults to 256.
  * @param {string} histogram (optional) Histogram method: 'top-pop' for global top-population, 'min-pop' for minimum-population threshhold within subregions. Defaults to 'min-pop'.
  * @param {object} dither (optional) An object configuring the dithering to apply, as explained for `quantizeDekker()`.
- * @see quantizeDekker
- * @see quantizeWu
  */
 
 exports.quantizeSorokin = function (imageOrImages, maxColorIndexes, histogram, dither) {
@@ -173,12 +173,12 @@ exports.quantizeSorokin = function (imageOrImages, maxColorIndexes, histogram, d
  * 
  * The method may increase the number of colors if there are fewer than the provided maximum.
  * 
+ * @function quantizeWu
+ * @memberof GifUtil
  * @param {BitmapImage|BitmapImage[]} imageOrImages Image or array of images (such as GifFrame instances) to be color-quantized. Quantizing across multiple images ensures color consistency from frame to frame.
  * @param {number} maxColorIndexes The maximum number of color indexes that will exist in the palette after completing quantization. Defaults to 256.
  * @param {number} significantBits (optional) This is the number of significant high bits in each RGB color channel. Takes integer values from 1 through 8. Higher values correspond to higher quality. Defaults to 5.
  * @param {object} dither (optional) An object configuring the dithering to apply, as explained for `quantizeDekker()`.
- * @see quantizeDekker
- * @see quantizeSorokin
  */
 
 exports.quantizeWu = function (imageOrImages, maxColorIndexes, significantBits, dither) {
