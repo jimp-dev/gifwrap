@@ -62,6 +62,8 @@ export class BitmapImage {
     blit(toImage: BitmapImage, toX: number, toY: number, fromX: number, fromY: number,
             fromWidth: number, fromHeight: number): this;
     fillRGBA(color: number): this;
+    getRGBA(x: number, y: number): number;
+    getRGBASet(): Set;
     greyscale(): this;
     reframe(xOffset: number, yOffset: number, width: number, height: number, fillRGBA?: number)
         : this;
