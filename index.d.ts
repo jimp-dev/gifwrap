@@ -63,7 +63,7 @@ export class BitmapImage {
             fromWidth: number, fromHeight: number): this;
     fillRGBA(color: number): this;
     getRGBA(x: number, y: number): number;
-    getRGBASet(): Set;
+    getRGBASet(): Set<number>;
     greyscale(): this;
     reframe(xOffset: number, yOffset: number, width: number, height: number, fillRGBA?: number)
         : this;
