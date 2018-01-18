@@ -138,49 +138,7 @@ class BitmapImage {
     }
 
     /**
-     * Get a summary of the colors found within the image. The return value is an object of the following form:
-     * 
-     * Property | Description
-     * --- | ---
-     * colors | An array of all the opaque colors found within the image. Each color is given as an RGB number of the form 0xRRGGBB. The array is sorted by increasing number. Will be an empty array when the image is completely transparent.
-     * usesTransparency | boolean indicating whether there are any transparent pixels within the image. A pixel is considered transparent if its alpha value is 0x00.
-     * indexCount | The number of color indexes required to represent this palette of colors. It is equal to the number of opaque colors plus one if the image includes transparency.
-     * 
-     * @return {object} An object representing a color palette as described above.
-     */
-
-    getPalette() {
-        // returns with colors sorted low to high
-        const colorSet = new Set();
-        const buf = this.bitmap.data;
-        let i = 0;
-        let usesTransparency = false;
-        while (i < buf.length) {
-            if (buf[i + 3] === 0) {
-                usesTransparency = true;
-            }
-            else {
-                // can eliminate the bitshift by starting one byte prior
-                const color = (buf.readUInt32BE(i, true) >> 8) & 0xFFFFFF;
-                colorSet.add(color);
-            }
-            i += 4; // skip alpha
-        }
-        const colors = new Array(colorSet.size);
-        const iter = colorSet.values();
-        for (i = 0; i < colors.length; ++i) {
-            colors[i] = iter.next().value;
-        }
-        colors.sort((a, b) => (a - b));
-        let indexCount = colors.length;
-        if (usesTransparency) {
-            ++indexCount;
-        }
-        return { colors, usesTransparency, indexCount };
-    }
-
-    /**
-     * Gets the RGBA number of the pixel at the given coordinate in the form 0xRRGGBBAA, where AA is the alpha value, with 0x00 being transparent.
+     * Gets the RGBA number of the pixel at the given coordinate in the form 0xRRGGBBAA, where AA is the alpha value, with alpha 0x00 encoding to transparency in GIFs.
      * 
      * @param {number} x x-coord of pixel
      * @param {number} y y-coord of pixel
@@ -190,6 +148,21 @@ class BitmapImage {
     getRGBA(x, y) {
         const bi = (y * this.bitmap.width + x) * 4;
         return this.bitmap.data.readUInt32BE(bi);
+    }
+
+    /**
+     * Gets a set of all RGBA colors found within the image.
+     * 
+     * @return {Set} Set of all RGBA colors that the image contains.
+     */
+
+    getRGBASet() {
+        const rgbaSet = new Set();
+        const buf = this.bitmap.data;
+        for (let bi = 0; bi < buf.length; bi += 4) {
+            rgbaSet.add(buf.readUInt32BE(bi, true));
+        }
+        return rgbaSet;
     }
 
     /**

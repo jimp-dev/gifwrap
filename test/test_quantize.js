@@ -17,7 +17,6 @@ describe("graphics color index reduction", () => {
         return _graphicsTest('quantizeDekker', 256);
     });
 
-
     it("Sorokin-quantizes down to 32 colors", () => {
 
         return _graphicsTest('quantizeSorokin', 32);
@@ -146,6 +145,15 @@ function _graphicsTest(method, maxColors) {
     })
 }
 
+function _hasTransparency(colorSet) {
+    for (let rgba of colorSet.values()) {
+        if ((rgba & 0xff) === 0x00) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function _photoTest(method, maxColors) {
     return _reductionTest("hairstreak.jpg", false, method, maxColors);
 }
@@ -171,9 +179,9 @@ function _reductionTest(sourceFile, usesTransparency, method, maxColors, modifie
                 if (err) return reject(err);
                 work = new BitmapImage(manyJimp.bitmap);
 
-                const inputPalette = work.getPalette();
-                assert.strictEqual(inputPalette.usesTransparency, usesTransparency, label);
-                assert.isAtLeast(inputPalette.indexCount, maxColors + 1, label);
+                const inputColorSet = work.getRGBASet();
+                assert.strictEqual(_hasTransparency(inputColorSet), usesTransparency, label);
+                assert.isAtLeast(inputColorSet.size, maxColors + 1, label);
 
                 if (method === 'quantizeDekker') {
                     GifUtil[method](work, maxColors, dither);
@@ -187,9 +195,9 @@ function _reductionTest(sourceFile, usesTransparency, method, maxColors, modifie
                 assert.strictEqual(workBuf.length, manyJimp.bitmap.data.length, label);
                 assert.strictEqual(workBuf.compare(limitedBuf), 0, label);
 
-                const outputPalette = work.getPalette();
-                assert.strictEqual(outputPalette.usesTransparency, usesTransparency, label);
-                assert.isAtMost(outputPalette.indexCount, maxColors, label);
+                const outputColorSet = work.getRGBASet();
+                assert.strictEqual(_hasTransparency(outputColorSet), usesTransparency, label);
+                assert.isAtMost(outputColorSet.size, maxColors, label);
                 resolve();
             });
         });

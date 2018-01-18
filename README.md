@@ -214,9 +214,9 @@ The [Typescript typings](https://github.com/jtlapp/gifwrap/blob/master/index.d.t
 
     * [.fillRGBA(rgba)](#BitmapImage+fillRGBA)
 
-    * [.getPalette()](#BitmapImage+getPalette)
-
     * [.getRGBA(x, y)](#BitmapImage+getRGBA)
+
+    * [.getRGBASet()](#BitmapImage+getRGBASet)
 
     * [.greyscale()](#BitmapImage+greyscale)
 
@@ -227,6 +227,14 @@ The [Typescript typings](https://github.com/jtlapp/gifwrap/blob/master/index.d.t
     * [.scanAllCoords(scanHandler)](#BitmapImage+scanAllCoords)
 
     * [.scanAllIndexes(scanHandler)](#BitmapImage+scanAllIndexes)
+
+
+
+* [GifFrame](#GifFrame)
+
+    * [new GifFrame()](#new_GifFrame_new)
+
+    * [.getPalette()](#GifFrame+getPalette)
 
 
 
@@ -326,18 +334,6 @@ Copy a square portion of this image into another image.
 Fills the image with a single color.
 
 **Returns**: [<code>BitmapImage</code>](#BitmapImage) - The present image to allow for chaining.  
-<a name="BitmapImage+getPalette"></a>
-
-### *bitmapImage*.getPalette()
-Get a summary of the colors found within the image. The return value is an object of the following form:
-
-Property | Description
---- | ---
-colors | An array of all the opaque colors found within the image. Each color is given as an RGB number of the form 0xRRGGBB. The array is sorted by increasing number. Will be an empty array when the image is completely transparent.
-usesTransparency | boolean indicating whether there are any transparent pixels within the image. A pixel is considered transparent if its alpha value is 0x00.
-indexCount | The number of color indexes required to represent this palette of colors. It is equal to the number of opaque colors plus one if the image includes transparency.
-
-**Returns**: <code>object</code> - An object representing a color palette as described above.  
 <a name="BitmapImage+getRGBA"></a>
 
 ### *bitmapImage*.getRGBA(x, y)
@@ -347,9 +343,15 @@ indexCount | The number of color indexes required to represent this palette of c
 | x | <code>number</code> | x-coord of pixel |
 | y | <code>number</code> | y-coord of pixel |
 
-Gets the RGBA number of the pixel at the given coordinate in the form 0xRRGGBBAA, where AA is the alpha value, with 0x00 being transparent.
+Gets the RGBA number of the pixel at the given coordinate in the form 0xRRGGBBAA, where AA is the alpha value, with alpha 0x00 encoding to transparency in GIFs.
 
 **Returns**: <code>number</code> - RGBA of pixel in 0xRRGGBBAA form  
+<a name="BitmapImage+getRGBASet"></a>
+
+### *bitmapImage*.getRGBASet()
+Gets a set of all RGBA colors found within the image.
+
+**Returns**: <code>Set</code> - Set of all RGBA colors that the image contains.  
 <a name="BitmapImage+greyscale"></a>
 
 ### *bitmapImage*.greyscale()
@@ -429,6 +431,18 @@ See the base class BitmapImage for a discussion of all parameters but `options` 
 
 Provide a `frame` to the constructor to create a clone of the provided frame. The new frame includes a copy of the provided frame's pixel data so that each can subsequently be modified without affecting each other.
 
+<a name="GifFrame+getPalette"></a>
+
+### *gifFrame*.getPalette()
+Get a summary of the colors found within the frame. The return value is an object of the following form:
+
+Property | Description
+--- | ---
+colors | An array of all the opaque colors found within the frame. Each color is given as an RGB number of the form 0xRRGGBB. The array is sorted by increasing number. Will be an empty array when the image is completely transparent.
+usesTransparency | boolean indicating whether there are any transparent pixels within the frame. A pixel is considered transparent if its alpha value is 0x00.
+indexCount | The number of color indexes required to represent this palette of colors. It is equal to the number of opaque colors plus one if the image includes transparency.
+
+**Returns**: <code>object</code> - An object representing a color palette as described above.  
 <a name="GifUtil.cloneFrames"></a>
 
 ### *GifUtil*.cloneFrames(frames)

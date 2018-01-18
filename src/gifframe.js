@@ -62,6 +62,48 @@ class GifFrame extends BitmapImage {
             this.interlaced = options.interlaced || false;
         }
     }
+
+    /**
+     * Get a summary of the colors found within the frame. The return value is an object of the following form:
+     * 
+     * Property | Description
+     * --- | ---
+     * colors | An array of all the opaque colors found within the frame. Each color is given as an RGB number of the form 0xRRGGBB. The array is sorted by increasing number. Will be an empty array when the image is completely transparent.
+     * usesTransparency | boolean indicating whether there are any transparent pixels within the frame. A pixel is considered transparent if its alpha value is 0x00.
+     * indexCount | The number of color indexes required to represent this palette of colors. It is equal to the number of opaque colors plus one if the image includes transparency.
+     * 
+     * @return {object} An object representing a color palette as described above.
+     */
+
+    getPalette() {
+        // returns with colors sorted low to high
+        const colorSet = new Set();
+        const buf = this.bitmap.data;
+        let i = 0;
+        let usesTransparency = false;
+        while (i < buf.length) {
+            if (buf[i + 3] === 0) {
+                usesTransparency = true;
+            }
+            else {
+                // can eliminate the bitshift by starting one byte prior
+                const color = (buf.readUInt32BE(i, true) >> 8) & 0xFFFFFF;
+                colorSet.add(color);
+            }
+            i += 4; // skip alpha
+        }
+        const colors = new Array(colorSet.size);
+        const iter = colorSet.values();
+        for (i = 0; i < colors.length; ++i) {
+            colors[i] = iter.next().value;
+        }
+        colors.sort((a, b) => (a - b));
+        let indexCount = colors.length;
+        if (usesTransparency) {
+            ++indexCount;
+        }
+        return { colors, usesTransparency, indexCount };
+    }
 }
 
 GifFrame.DisposeToAnything = 0;
