@@ -7,7 +7,7 @@ exports.COLORS = {
     'B': 0x0000FFff, // blue
     'b': 0x0000FF7f, // blue half-alpha
     '*': 0x000000ff, // black
-    ' ': 0x00000000, // black transparent
+    ' ': 0x00000000, // fully transparent
     'W': 0xFFFFFFff, // white
     '_': 0xFFFFFF01,  // white transparent
     '4': 0x404040ff, // dark grey
@@ -34,15 +34,15 @@ exports.PREMADE = {
     ],
 
     singleFrameNoColorTrans: [
-        'rrr',
-        'rrr',
-        'rrr'
+        '   ',
+        '   ',
+        '   '
     ],
 
     singleFrameMonoTrans: [
-        'bGb',
+        ' G ',
         'GGG',
-        'bGb'
+        ' G '
     ],
 
     singleFrameBWOpaque: [
@@ -58,7 +58,13 @@ exports.PREMADE = {
 
     singleFrameMultiTrans: [
         'RGB ',
-        '_RGB',
+        ' RGB',
+        '   *'
+    ],
+
+    singleFrameMultiPartialTrans: [
+        '_G  ',
+        '__G ',
         'rgb*'
     ],
 

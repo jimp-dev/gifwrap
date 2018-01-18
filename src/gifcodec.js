@@ -27,7 +27,7 @@ class GifCodec
      * 
      * Its constructor takes one option argument:
      * 
-     * @param {object} options Optionally takes an objection whose only possible property is `transparentRGB`. Images are internally represented in RGBA format, where A is the alpha value of a pixel. When `transparentRGB` is provided, this RGB value is assigned to transparent pixels, which have alpha value 0x00. All other pixels have alpha value 0xFF. The RGB color of transparent pixels shouldn't matter for most applications. Defaults to 0x000000.
+     * @param {object} options Optionally takes an objection whose only possible property is `transparentRGB`. Images are internally represented in RGBA format, where A is the alpha value of a pixel. When `transparentRGB` is provided, this RGB value (excluding alpha) is assigned to transparent pixels, which are also given alpha value 0x00. (All opaque pixels are given alpha value 0xFF). The RGB color of transparent pixels shouldn't matter for most applications. Defaults to 0x000000.
      */
 
     constructor(options = {}) {
@@ -41,7 +41,7 @@ class GifCodec
     }
 
     /**
-     * Decodes a GIF from a Buffer to yield an instance of Gif. Transparent pixels of the GIF are given alpha values of 0x00, and opaque pixels are given alpha values of 0xFF.
+     * Decodes a GIF from a Buffer to yield an instance of Gif. Transparent pixels of the GIF are given alpha values of 0x00, and opaque pixels are given alpha values of 0xFF. The RGB values of transparent pixels default to 0x000000 but can be overridden by the constructor's `transparentRGB` option.
      * 
      * @param {Buffer} buffer Bytes of an encoded GIF to decode.
      * @return {Promise} A Promise that resolves to an instance of the Gif class, representing the encoded GIF.
@@ -82,7 +82,7 @@ class GifCodec
     }
 
     /**
-     * Encodes a GIF from provided frames. Any pixel not having an alpha value of 0xFF renders as transparent within the encoding, while all pixels of alpha value 0xFF are opaque.
+     * Encodes a GIF from provided frames. Each pixel having an alpha value of 0x00 renders as transparent within the encoding, while all pixels of non-zero alpha value render as opaque.
      * 
      * @param {GifFrame[]} frames Array of frames to encode
      * @param {object} spec An optional object that may provide values for `loops` and `colorScope`, as defined for the Gif class. However, `colorSpace` may also take the value Gif.GlobalColorsPreferred (== 0) to indicate that the encoder should attempt to create only a global color table. `loop` defaults to 0, looping indefinitely, and `colorScope` defaults to Gif.GlobalColorsPreferred.
@@ -302,7 +302,7 @@ function _getIndexedImage(frameIndex, frame, palette) {
     let i = 0, j = 0;
 
     while (i < colorBuffer.length) {
-        if (colorBuffer[i + 3] === 255) {
+        if (colorBuffer[i + 3] !== 0) {
             const color = (colorBuffer.readUInt32BE(i, true) >> 8) & 0xFFFFFF;
             // caller guarantees that the color will be in the palette
             indexBuffer[j] = colorToIndexFunc(colors, color);

@@ -147,7 +147,7 @@ function _stringsToBitmap(stringPic, transparentRGB) {
             if (Bitmaps.COLORS[row[x]] !== undefined) {
                 const color = Bitmaps.COLORS[row[x]];
                 const alpha = color & 0xff;
-                if (alpha === 255 || trans === undefined) {
+                if (alpha !== 0 || trans === undefined) {
                     data[offset] = (color >> 24) & 0xff;
                     data[offset + 1] = (color >> 16) & 0xff;
                     data[offset + 2] = (color >> 8) & 0xff;

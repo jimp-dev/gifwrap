@@ -213,7 +213,7 @@ function _seriesTest(method, specialColor) {
         for (let x = 0; x < width; ++x) {
             buf[bi] = x * 8;
             buf[bi + 1] = y * 8;
-            buf[bi + 3] = 0xff;
+            buf[bi + 3] = 255;
             bi += 4;
         }
     }
@@ -226,7 +226,7 @@ function _seriesTest(method, specialColor) {
         for (let x = 0; x < width; ++x) {
             buf[bi] = x * 8 + 4;
             buf[bi + 1] = y * 8 + 4;
-            buf[bi + 3] = 0xff;
+            buf[bi + 3] = 255;
             bi += 4;
         }
     }
@@ -238,7 +238,7 @@ function _seriesTest(method, specialColor) {
     for (let y = 0; y < height; ++y) {
         for (let x = 0; x < width; ++x) {
             if (x < width / 2) {
-                buf.writeUInt32BE(0xff, bi);
+                buf.writeUInt32BE(255, bi);
             }
             else {
                 buf.writeUInt32BE(specialColor, bi);

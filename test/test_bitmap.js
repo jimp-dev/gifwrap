@@ -147,11 +147,11 @@ describe("BitmapImage palette", () => {
 
     it("includes multiple colors with transparency", (done) => {
 
-        const bitmap = Tools.getBitmap('singleFrameMultiTrans');
+        const bitmap = Tools.getBitmap('singleFrameMultiPartialTrans');
         const f = new BitmapImage(bitmap);
         const p = f.getPalette();
         assert.deepStrictEqual(p.colors,
-                [0x000000, 0x0000ff, 0x00ff00, 0xff0000]);
+                [0x000000, 0x0000ff, 0x00ff00, 0xff0000, 0xffffff]);
         assert.strictEqual(p.usesTransparency, true);
         done();
     });

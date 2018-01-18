@@ -60,7 +60,7 @@ Images are represented within a GifFrame exactly as they are in a `Jimp` image. 
 * `frame.bitmap.height` - Height of image in pixels
 * `frame.bitmap.data` - A Node.js Buffer that can be accessed like an array of bytes. Every 4 adjacent bytes represents the RGBA values of a single pixel. These 4 bytes correspond to red, green, blue, and alpha, in that order. Each pixel begins at an index that is a multiple of 4.
 
-GIFs do not support partial transparency, so within `frame.bitmap.data`, the pixels having alpha value 0xFF are treated as opaque and pixels of all other alpha values are treated as transparent. The encoder ignores the RGB values of transparent pixels.
+GIFs do not support partial transparency, so within `frame.bitmap.data`, pixels having alpha value 0x00 are treated as transparent and pixels of non-zero alpha value are treated as opaque. The encoder ignores the RGB values of transparent pixels.
 
 `gifwrap` also provides utilities for reading GIF files and for parsing raw encodings:
 

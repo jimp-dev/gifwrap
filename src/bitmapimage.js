@@ -22,7 +22,7 @@ class BitmapImage {
      * 
      * When a `BitmapImage` is provided, the constructed `BitmapImage` is a deep clone of the provided one, so that each image's pixel data can subsequently be modified without affecting each other.
      *
-     * `backgroundRGBA` is an optional parameter representing a pixel as a single number. In hex, the number is as follows: 0xRRGGBBAA, where RR is the red byte, GG the green byte, BB, the blue byte, and AA the alpha value. An AA of 0xFF is considered opaque, and all other AA values are treated as transparent.
+     * `backgroundRGBA` is an optional parameter representing a pixel as a single number. In hex, the number is as follows: 0xRRGGBBAA, where RR is the red byte, GG the green byte, BB, the blue byte, and AA the alpha value. An AA of 0x00 is considered transparent, and all non-zero AA values are treated as opaque.
      */
 
     constructor(...args) {
@@ -117,7 +117,7 @@ class BitmapImage {
     /**
      * Fills the image with a single color.
      * 
-     * @param {number} rgba Color with which to fill image, expressed as a singlenumber in the form 0xRRGGBBAA, where AA is 0xFF for opaque and any other value for transparent.
+     * @param {number} rgba Color with which to fill image, expressed as a singlenumber in the form 0xRRGGBBAA, where AA is 0x00 for transparent and any other value for opaque.
      * @return {BitmapImage} The present image to allow for chaining.
      */
 
@@ -143,7 +143,7 @@ class BitmapImage {
      * Property | Description
      * --- | ---
      * colors | An array of all the opaque colors found within the image. Each color is given as an RGB number of the form 0xRRGGBB. The array is sorted by increasing number. Will be an empty array when the image is completely transparent.
-     * usesTransparency | boolean indicating whether there are any transparent pixels within the image. A pixel is considered transparent if its alpha value is not 0xFF.
+     * usesTransparency | boolean indicating whether there are any transparent pixels within the image. A pixel is considered transparent if its alpha value is 0x00.
      * indexCount | The number of color indexes required to represent this palette of colors. It is equal to the number of opaque colors plus one if the image includes transparency.
      * 
      * @return {object} An object representing a color palette as described above.
@@ -156,7 +156,7 @@ class BitmapImage {
         let i = 0;
         let usesTransparency = false;
         while (i < buf.length) {
-            if (buf[i + 3] < 255) {
+            if (buf[i + 3] === 0) {
                 usesTransparency = true;
             }
             else {
@@ -180,7 +180,7 @@ class BitmapImage {
     }
 
     /**
-     * Gets the RGBA number of the pixel at the given coordinate in the form 0xRRGGBBAA, where AA is the alpha value, with 0xFF being opaque.
+     * Gets the RGBA number of the pixel at the given coordinate in the form 0xRRGGBBAA, where AA is the alpha value, with 0x00 being transparent.
      * 
      * @param {number} x x-coord of pixel
      * @param {number} y y-coord of pixel
@@ -220,7 +220,7 @@ class BitmapImage {
      * @param {number} yOffset The y-coord offset of the upper-left pixel of the desired image relative to the present image.
      * @param {number} width The width of the new image after reframing
      * @param {number} height The height of the new image after reframing
-     * @param {number} fillRGBA The color with which to fill space added to the image as a result of the reframing, in 0xRRGGBBAA format, where AA is 0xFF to indicate opaque and any other value to indicate transparent. This parameter is only required when the reframing exceeds the original boundaries (i.e. does not simply perform a crop).
+     * @param {number} fillRGBA The color with which to fill space added to the image as a result of the reframing, in 0xRRGGBBAA format, where AA is 0x00 to indicate transparent and a non-zero value to indicate opaque. This parameter is only required when the reframing exceeds the original boundaries (i.e. does not simply perform a crop).
      * @return {BitmapImage} The present image to allow for chaining.
      */
 

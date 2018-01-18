@@ -60,7 +60,7 @@ Images are represented within a GifFrame exactly as they are in a `Jimp` image. 
 * `frame.bitmap.height` - Height of image in pixels
 * `frame.bitmap.data` - A Node.js Buffer that can be accessed like an array of bytes. Every 4 adjacent bytes represents the RGBA values of a single pixel. These 4 bytes correspond to red, green, blue, and alpha, in that order. Each pixel begins at an index that is a multiple of 4.
 
-GIFs do not support partial transparency, so within `frame.bitmap.data`, the pixels having alpha value 0xFF are treated as opaque and pixels of all other alpha values are treated as transparent. The encoder ignores the RGB values of transparent pixels.
+GIFs do not support partial transparency, so within `frame.bitmap.data`, pixels having alpha value 0x00 are treated as transparent and pixels of non-zero alpha value are treated as opaque. The encoder ignores the RGB values of transparent pixels.
 
 `gifwrap` also provides utilities for reading GIF files and for parsing raw encodings:
 
@@ -214,6 +214,8 @@ The [Typescript typings](https://github.com/jtlapp/gifwrap/blob/master/index.d.t
 
     * [.fillRGBA(rgba)](#BitmapImage+fillRGBA)
 
+    * [.getPalette()](#BitmapImage+getPalette)
+
     * [.getRGBA(x, y)](#BitmapImage+getRGBA)
 
     * [.greyscale()](#BitmapImage+greyscale)
@@ -225,14 +227,6 @@ The [Typescript typings](https://github.com/jtlapp/gifwrap/blob/master/index.d.t
     * [.scanAllCoords(scanHandler)](#BitmapImage+scanAllCoords)
 
     * [.scanAllIndexes(scanHandler)](#BitmapImage+scanAllIndexes)
-
-
-
-* [GifFrame](#GifFrame)
-
-    * [new GifFrame()](#new_GifFrame_new)
-
-    * [.getPalette()](#GifFrame+getPalette)
 
 
 
@@ -304,7 +298,7 @@ Its constructor supports the following signatures:
 
 When a `BitmapImage` is provided, the constructed `BitmapImage` is a deep clone of the provided one, so that each image's pixel data can subsequently be modified without affecting each other.
 
-`backgroundRGBA` is an optional parameter representing a pixel as a single number. In hex, the number is as follows: 0xRRGGBBAA, where RR is the red byte, GG the green byte, BB, the blue byte, and AA the alpha value. An AA of 0xFF is considered opaque, and all other AA values are treated as transparent.
+`backgroundRGBA` is an optional parameter representing a pixel as a single number. In hex, the number is as follows: 0xRRGGBBAA, where RR is the red byte, GG the green byte, BB, the blue byte, and AA the alpha value. An AA of 0x00 is considered transparent, and all non-zero AA values are treated as opaque.
 
 <a name="BitmapImage+blit"></a>
 
@@ -327,11 +321,23 @@ Copy a square portion of this image into another image.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| rgba | <code>number</code> | Color with which to fill image, expressed as a singlenumber in the form 0xRRGGBBAA, where AA is 0xFF for opaque and any other value for transparent. |
+| rgba | <code>number</code> | Color with which to fill image, expressed as a singlenumber in the form 0xRRGGBBAA, where AA is 0x00 for transparent and any other value for opaque. |
 
 Fills the image with a single color.
 
 **Returns**: [<code>BitmapImage</code>](#BitmapImage) - The present image to allow for chaining.  
+<a name="BitmapImage+getPalette"></a>
+
+### *bitmapImage*.getPalette()
+Get a summary of the colors found within the image. The return value is an object of the following form:
+
+Property | Description
+--- | ---
+colors | An array of all the opaque colors found within the image. Each color is given as an RGB number of the form 0xRRGGBB. The array is sorted by increasing number. Will be an empty array when the image is completely transparent.
+usesTransparency | boolean indicating whether there are any transparent pixels within the image. A pixel is considered transparent if its alpha value is 0x00.
+indexCount | The number of color indexes required to represent this palette of colors. It is equal to the number of opaque colors plus one if the image includes transparency.
+
+**Returns**: <code>object</code> - An object representing a color palette as described above.  
 <a name="BitmapImage+getRGBA"></a>
 
 ### *bitmapImage*.getRGBA(x, y)
@@ -341,7 +347,7 @@ Fills the image with a single color.
 | x | <code>number</code> | x-coord of pixel |
 | y | <code>number</code> | y-coord of pixel |
 
-Gets the RGBA number of the pixel at the given coordinate in the form 0xRRGGBBAA, where AA is the alpha value, with 0xFF being opaque.
+Gets the RGBA number of the pixel at the given coordinate in the form 0xRRGGBBAA, where AA is the alpha value, with 0x00 being transparent.
 
 **Returns**: <code>number</code> - RGBA of pixel in 0xRRGGBBAA form  
 <a name="BitmapImage+greyscale"></a>
@@ -360,7 +366,7 @@ Converts the image to greyscale using inferred Adobe metrics.
 | yOffset | <code>number</code> | The y-coord offset of the upper-left pixel of the desired image relative to the present image. |
 | width | <code>number</code> | The width of the new image after reframing |
 | height | <code>number</code> | The height of the new image after reframing |
-| fillRGBA | <code>number</code> | The color with which to fill space added to the image as a result of the reframing, in 0xRRGGBBAA format, where AA is 0xFF to indicate opaque and any other value to indicate transparent. This parameter is only required when the reframing exceeds the original boundaries (i.e. does not simply perform a crop). |
+| fillRGBA | <code>number</code> | The color with which to fill space added to the image as a result of the reframing, in 0xRRGGBBAA format, where AA is 0x00 to indicate transparent and a non-zero value to indicate opaque. This parameter is only required when the reframing exceeds the original boundaries (i.e. does not simply perform a crop). |
 
 Reframes the image as if placing a frame around the original image and replacing the original image with the newly framed image. When the new frame is strictly within the boundaries of the original image, this method crops the image. When any of the new boundaries exceed those of the original image, the `fillRGBA` must be provided to indicate the color with which to fill the extra space added to the image.
 
@@ -423,18 +429,6 @@ See the base class BitmapImage for a discussion of all parameters but `options` 
 
 Provide a `frame` to the constructor to create a clone of the provided frame. The new frame includes a copy of the provided frame's pixel data so that each can subsequently be modified without affecting each other.
 
-<a name="GifFrame+getPalette"></a>
-
-### *gifFrame*.getPalette()
-Get a summary of the colors found within the frame. The return value is an object of the following form:
-
-Property | Description
---- | ---
-colors | An array of all the opaque colors found within the frame. Each color is given as an RGB number of the form 0xRRGGBB. The array is sorted by increasing number. Will be an empty array when the frame is completely transparent.
-usesTransparency | boolean indicating whether there are any transparent pixels within the frame. A pixel is considered transparent if its alpha value is not 0xFF.
-indexCount | The number of color indexes required to represent this palette of colors. It is equal to the number of opaque colors plus one if the frame includes transparency.
-
-**Returns**: <code>object</code> - An object representing a color palette as described above.  
 <a name="GifUtil.cloneFrames"></a>
 
 ### *GifUtil*.cloneFrames(frames)
@@ -507,7 +501,7 @@ write() encodes a GIF and saves it as a file.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| options | <code>object</code> | Optionally takes an objection whose only possible property is `transparentRGB`. Images are internally represented in RGBA format, where A is the alpha value of a pixel. When `transparentRGB` is provided, this RGB value is assigned to transparent pixels, which have alpha value 0x00. All other pixels have alpha value 0xFF. The RGB color of transparent pixels shouldn't matter for most applications. Defaults to 0x000000. |
+| options | <code>object</code> | Optionally takes an objection whose only possible property is `transparentRGB`. Images are internally represented in RGBA format, where A is the alpha value of a pixel. When `transparentRGB` is provided, this RGB value (excluding alpha) is assigned to transparent pixels, which are also given alpha value 0x00. (All opaque pixels are given alpha value 0xFF). The RGB color of transparent pixels shouldn't matter for most applications. Defaults to 0x000000. |
 
 GifCodec is a class that both encodes and decodes GIFs. It implements both the `encode()` method expected of an encoder and the `decode()` method expected of a decoder, and it wraps the `omggif` GIF encoder/decoder package. GifCodec serves as this library's default encoder and decoder, but it's possible to wrap other GIF encoders and decoders for use by `gifwrap` as well. GifCodec will not encode GIFs with interlacing.
 
@@ -527,7 +521,7 @@ Its constructor takes one option argument:
 | --- | --- | --- |
 | buffer | <code>Buffer</code> | Bytes of an encoded GIF to decode. |
 
-Decodes a GIF from a Buffer to yield an instance of Gif. Transparent pixels of the GIF are given alpha values of 0x00, and opaque pixels are given alpha values of 0xFF.
+Decodes a GIF from a Buffer to yield an instance of Gif. Transparent pixels of the GIF are given alpha values of 0x00, and opaque pixels are given alpha values of 0xFF. The RGB values of transparent pixels default to 0x000000 but can be overridden by the constructor's `transparentRGB` option.
 
 **Returns**: <code>Promise</code> - A Promise that resolves to an instance of the Gif class, representing the encoded GIF.  
 <a name="GifCodec+encodeGif"></a>
@@ -543,7 +537,7 @@ Decodes a GIF from a Buffer to yield an instance of Gif. Transparent pixels of t
 | frames | [<code>Array.&lt;GifFrame&gt;</code>](#GifFrame) | Array of frames to encode |
 | spec | <code>object</code> | An optional object that may provide values for `loops` and `colorScope`, as defined for the Gif class. However, `colorSpace` may also take the value Gif.GlobalColorsPreferred (== 0) to indicate that the encoder should attempt to create only a global color table. `loop` defaults to 0, looping indefinitely, and `colorScope` defaults to Gif.GlobalColorsPreferred. |
 
-Encodes a GIF from provided frames. Any pixel not having an alpha value of 0xFF renders as transparent within the encoding, while all pixels of alpha value 0xFF are opaque.
+Encodes a GIF from provided frames. Each pixel having an alpha value of 0x00 renders as transparent within the encoding, while all pixels of non-zero alpha value render as opaque.
 
 **Returns**: <code>Promise</code> - A Promise that resolves to an instance of the Gif class, representing the encoded GIF.  
 <a name="new_GifError_new"></a>
