@@ -122,11 +122,7 @@ exports.getMaxDimensions = function (frames) {
  * @memberof GifUtil
  * @param {BitmapImage|BitmapImage[]} imageOrImages Image or array of images (such as GifFrame instances) to be color-quantized. Quantizing across multiple images ensures color consistency from frame to frame.
  * @param {number} maxColorIndexes The maximum number of color indexes that will exist in the palette after completing quantization. Defaults to 256.
- * @param {object} dither (optional) An object configuring the dithering to apply. The properties are as followings, imported from the [`image-q` package](https://github.com/ibezkrovnyi/image-quantization) without explanation:
- * - ditherAlgorithm - One of 'FloydSteinberg' | 'FalseFloydSteinberg' | 'Stucki' | 'Atkinson' 'Jarvis' | 'Burkes' | 'Sierra' | 'TwoSierra' | 'SierraLite'.
- * - minimumColorDistanceToDither - (optional) A number defaulting to 0.
- * - serpentine - (optional) A boolean defaulting to true.
- * - calculateErrorLikeGIMP - (optional) A boolean defaulting to false.
+ * @param {object} dither (optional) An object configuring the dithering to apply. The properties are as followings, imported from the [`image-q` package](https://github.com/ibezkrovnyi/image-quantization) without explanation: { `ditherAlgorithm`: One of 'FloydSteinberg', 'FalseFloydSteinberg', 'Stucki', 'Atkinson', 'Jarvis', 'Burkes', 'Sierra', 'TwoSierra', 'SierraLite'; `minimumColorDistanceToDither`: (optional) A number defaulting to 0; `serpentine`: (optional) A boolean defaulting to true; `calculateErrorLikeGIMP`: (optional) A boolean defaulting to false. }
  */
 
 exports.quantizeDekker = function (imageOrImages, maxColorIndexes, dither) {
