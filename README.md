@@ -154,7 +154,7 @@ And you can construct a Jimp instance from a GifFrame image as follows:
 ```js
 const { BitmapImage, GifFrame } = require('gifwrap');
 const Jimp = require('jimp');
-const f = new Frame(200, 100, 0xFFFFFFFF);
+const f = new GifFrame(200, 100, 0xFFFFFFFF);
 
 // create a Jimp containing a clone of the frame bitmap
 const jCopied = new Jimp(1, 1, 0); // any Jimp
