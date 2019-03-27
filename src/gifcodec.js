@@ -114,8 +114,24 @@ class GifCodec
         let info, buffer;
         try {
             info = reader.frameInfo(frameIndex);
-            buffer = new Buffer(info.width * info.height * 4);
+            buffer = new Buffer(reader.width * reader.height * 4);
             reader.decodeAndBlitFrameRGBA(frameIndex, buffer);
+            if (info.width !== reader.width || info.height !== reader.height) {
+                if (info.y) {
+                    // skip unused rows
+                    buffer = buffer.slice(info.y * reader.width * 4);
+                }
+                if (reader.width > info.width) {
+                    // skip scanstride
+                    for (let ii = 0; ii < info.height; ++ii) {
+                        buffer.copy(buffer, ii * info.width * 4,
+                            (info.x + ii * reader.width) * 4,
+                            (info.x + ii * reader.width) * 4 + info.width * 4);
+                    }
+                }
+                // trim buffer to size
+                buffer = buffer.slice(0, info.width * info.height * 4);
+            }
         }
         catch (err) {
             throw new GifError(err);
