@@ -154,18 +154,14 @@ And you can construct a Jimp instance from a GifFrame image as follows:
 ```js
 const { BitmapImage, GifFrame } = require('gifwrap');
 const Jimp = require('jimp');
-const f = new Frame(200, 100, 0xFFFFFFFF);
+const frame = new GifFrame(200, 100, 0xFFFFFFFF);
 
 // create a Jimp containing a clone of the frame bitmap
-const jCopied = new Jimp(1, 1, 0); // any Jimp
-jCopied.bitmap = new BitmapImage(f);
+jimpCopied = GifUtil.copyAsJimp(Jimp, frame);
 
 // create a Jimp that shares a bitmap with the frame
-const jShared = new Jimp(1, 1, 0); // any Jimp
-jShared.bitmap = f.bitmap;
+jimpShared = GifUtil.shareAsJimp(Jimp, frame);
 ```
-
-You may want to create helper functions to encapsulate this behavior. In order to avoid creating a dependency on `Jimp`, such helper functions do not appear in `gifwrap`.
 
 ## Encoders and Decoders
 

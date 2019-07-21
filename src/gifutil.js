@@ -5,6 +5,7 @@
 const fs = require('fs');
 const ImageQ = require('image-q');
 
+const BitmapImage = require('./bitmapimage');
 const { GifFrame } = require('./gifframe');
 const { GifError } = require('./gif');
 const { GifCodec } = require('./gifcodec');
@@ -85,6 +86,20 @@ exports.getColorInfo = function (frames, maxGlobalIndex) {
     }
     colors.sort((a, b) => (a - b));
     return { colors, indexCount, usesTransparency, palettes };
+};
+
+/**
+ * copyAsJimp() returns a Jimp that contains a copy of the provided bitmap image (which may be either a BitmapImage or a GifFrame). Modifying the Jimp does not affect the provided bitmap image. This method serves as a macro for simplifying working with Jimp.
+ *
+ * @function copyAsJimp
+ * @memberof GifUtil
+ * @param {object} Reference to the Jimp package, keeping this library from being dependent on Jimp.
+ * @param {bitmapImageToCopy} Instance of BitmapImage (may be a GifUtil) with which to source the Jimp.
+ * @return {object} An new instance of Jimp containing a copy of the image in bitmapImageToCopy.
+ */
+ 
+exports.copyAsJimp = function (jimp, bitmapImageToCopy) {
+    return exports.shareAsJimp(jimp, new BitmapImage(bitmapImageToCopy));
 };
 
 /**
@@ -206,6 +221,23 @@ exports.read = function (source, decoder) {
 
         return decoder.decodeGif(buffer);
     });
+};
+
+/**
+ * shareAsJimp() returns a Jimp that shares a bitmap with the provided bitmap image (which may be either a BitmapImage or a GifFrame). Modifying the image in either the Jimp or the BitmapImage affects the other objects. This method serves as a macro for simplifying working with Jimp.
+ *
+ * @function shareAsJimp
+ * @memberof GifUtil
+ * @param {object} Reference to the Jimp package, keeping this library from being dependent on Jimp.
+ * @param {bitmapImageToShare} Instance of BitmapImage (may be a GifUtil) with which to source the Jimp.
+ * @return {object} An new instance of Jimp that shares the image in bitmapImageToShare.
+ */
+ 
+exports.shareAsJimp = function (jimp, bitmapImageToShare) {
+    const jimpImage = new jimp(bitmapImageToShare.bitmap.width,
+            bitmapImageToShare.bitmap.height, 0);
+    jimpImage.bitmap.data = bitmapImageToShare.bitmap.data;
+    return jimpImage;
 };
 
 /**

@@ -154,18 +154,14 @@ And you can construct a Jimp instance from a GifFrame image as follows:
 ```js
 const { BitmapImage, GifFrame } = require('gifwrap');
 const Jimp = require('jimp');
-const f = new GifFrame(200, 100, 0xFFFFFFFF);
+const frame = new GifFrame(200, 100, 0xFFFFFFFF);
 
 // create a Jimp containing a clone of the frame bitmap
-const jCopied = new Jimp(1, 1, 0); // any Jimp
-jCopied.bitmap = new BitmapImage(f);
+jimpCopied = GifUtil.copyAsJimp(Jimp, frame);
 
 // create a Jimp that shares a bitmap with the frame
-const jShared = new Jimp(1, 1, 0); // any Jimp
-jShared.bitmap = f.bitmap;
+jimpShared = GifUtil.shareAsJimp(Jimp, frame);
 ```
-
-You may want to create helper functions to encapsulate this behavior. In order to avoid creating a dependency on `Jimp`, such helper functions do not appear in `gifwrap`.
 
 ## Encoders and Decoders
 
@@ -244,6 +240,8 @@ The [Typescript typings](https://github.com/jtlapp/gifwrap/blob/master/index.d.t
 
     * [.getColorInfo(frames, maxGlobalIndex)](#GifUtil.getColorInfo)
 
+    * [.copyAsJimp(Reference, Instance)](#GifUtil.copyAsJimp)
+
     * [.getMaxDimensions(frames)](#GifUtil.getMaxDimensions)
 
     * [.quantizeDekker(imageOrImages, maxColorIndexes, dither)](#GifUtil.quantizeDekker)
@@ -253,6 +251,8 @@ The [Typescript typings](https://github.com/jtlapp/gifwrap/blob/master/index.d.t
     * [.quantizeWu(imageOrImages, maxColorIndexes, significantBits, dither)](#GifUtil.quantizeWu)
 
     * [.read(source, decoder)](#GifUtil.read)
+
+    * [.shareAsJimp(Reference, Instance)](#GifUtil.shareAsJimp)
 
     * [.write(path, frames, spec, encoder)](#GifUtil.write)
 
@@ -478,6 +478,18 @@ getColorInfo() gets information about the colors used in the provided frames. Th
 `maxGlobalIndex` controls whether the computation short-circuits to avoid doing work that the caller doesn't need. The method only returns `colors` and `indexCount` for the colors across all frames when the number of indexes required to store the colors and transparency in a GIF (which is the value of `indexCount`) is less than or equal to `maxGlobalIndex`. Such short-circuiting is useful when the caller just needs to determine whether any frame includes transparency.
 
 **Returns**: <code>object</code> - Object containing at least `palettes` and `usesTransparency`. `palettes` is an array of all the palettes returned by GifFrame#getPalette(). `usesTransparency` indicates whether at least one frame uses transparency. If `maxGlobalIndex` is not exceeded, the object also contains `colors`, an array of all colors (RGB) found across all palettes, sorted by increasing value, and `indexCount` indicating the number of indexes required to store the colors and the transparency in a GIF.  
+<a name="GifUtil.copyAsJimp"></a>
+
+### *GifUtil*.copyAsJimp(Reference, Instance)
+
+| Param | Type | Description |
+| --- | --- | --- |
+| Reference | <code>object</code> | to the Jimp package, keeping this library from being dependent on Jimp. |
+| Instance | <code>bitmapImageToCopy</code> | of BitmapImage (may be a GifUtil) with which to source the Jimp. |
+
+copyAsJimp() returns a Jimp that contains a copy of the provided bitmap image (which may be either a BitmapImage or a GifFrame). Modifying the Jimp does not affect the provided bitmap image. This method serves as a macro for simplifying working with Jimp.
+
+**Returns**: <code>object</code> - An new instance of Jimp containing a copy of the image in bitmapImageToCopy.  
 <a name="GifUtil.getMaxDimensions"></a>
 
 ### *GifUtil*.getMaxDimensions(frames)
@@ -549,6 +561,18 @@ The method may increase the number of colors if there are fewer than the provide
 read() decodes an encoded GIF, whether provided as a filename or as a byte buffer.
 
 **Returns**: <code>Promise</code> - A Promise that resolves to an instance of the Gif class, representing the decoded GIF.  
+<a name="GifUtil.shareAsJimp"></a>
+
+### *GifUtil*.shareAsJimp(Reference, Instance)
+
+| Param | Type | Description |
+| --- | --- | --- |
+| Reference | <code>object</code> | to the Jimp package, keeping this library from being dependent on Jimp. |
+| Instance | <code>bitmapImageToShare</code> | of BitmapImage (may be a GifUtil) with which to source the Jimp. |
+
+shareAsJimp() returns a Jimp that shares a bitmap with the provided bitmap image (which may be either a BitmapImage or a GifFrame). Modifying the image in either the Jimp or the BitmapImage affects the other objects. This method serves as a macro for simplifying working with Jimp.
+
+**Returns**: <code>object</code> - An new instance of Jimp that shares the image in bitmapImageToShare.  
 <a name="GifUtil.write"></a>
 
 ### *GifUtil*.write(path, frames, spec, encoder)

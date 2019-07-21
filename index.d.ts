@@ -114,6 +114,7 @@ export class GifError extends Error {
 export namespace GifUtil {
 
     function cloneFrames(frames: GifFrame[]): GifFrame[];
+    function copyAsJimp(jimp: any, bitmapImageToCopy: BitmapImage): any;
     function getColorInfo(frames: GifFrame[], maxGlobalIndex?: number): {
         colors?: number[],
         indexCount?: number,
@@ -128,6 +129,7 @@ export namespace GifUtil {
     function quantizeWu(imageOrImages: BitmapImage|BitmapImage[], maxColorIndexes: number,
             significantBits?: number, dither?: Dither): void;
     function read(source: string|Buffer, decoder?: GifDecoder): Promise<Gif>;
+    function shareAsJimp(jimp: any, bitmapImageToCopy: BitmapImage): any;
     function write(path: string, frames: GifFrame[], spec?: GifSpec, encoder?: GifEncoder):
             Promise<Gif>;
 }

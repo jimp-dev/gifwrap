@@ -3,7 +3,7 @@
 const assert = require('chai').assert;
 const Jimp = require('jimp');
 const Tools = require('./lib/tools');
-const { BitmapImage } = require('../src/index');
+const { BitmapImage, GifUtil } = require('../src/index');
 
 const SAMPLE_PNG_PATH = Tools.getFixturePath('lenna.png');
 const SAMPLE_JPG_PATH = Tools.getFixturePath('pelagrina.jpg');
@@ -108,17 +108,31 @@ describe("Jimp compatibility", () => {
             const newColor = initialColor + 0x01010101;
             i.fillRGBA(newColor);
             assert.strictEqual(i.getRGBA(5, 5), newColor);
-            const j2 = _createJimp(i.bitmap);
+            const j2 = GifUtil.shareAsJimp(Jimp, i);
             assert.strictEqual(j2.getPixelColor(5, 5), newColor);
             done();
         });
     });
 
-    it("works when sourcing Jimp", (done) => {
+    it("works when sourcing Jimp via sharing", (done) => {
 
         const initialColor = 0x12344321;
         const i1 = new BitmapImage(10, 5, initialColor);
-        const j = _createJimp(i1.bitmap);
+        const j = GifUtil.shareAsJimp(Jimp, i1);
+        assert.strictEqual(j.getPixelColor(3, 3), initialColor);
+        const newColor = initialColor + 0x01010101;
+        j.setPixelColor(newColor, 3, 3);
+        assert.strictEqual(j.getPixelColor(3, 3), newColor);
+        const i2 = new BitmapImage(j.bitmap);
+        assert.strictEqual(i2.getRGBA(3,3), newColor);
+        done();
+    });
+
+    it("works when sourcing Jimp via copying", (done) => {
+
+        const initialColor = 0x12344321;
+        const i1 = new BitmapImage(10, 5, initialColor);
+        const j = GifUtil.copyAsJimp(Jimp, i1);
         assert.strictEqual(j.getPixelColor(3, 3), initialColor);
         const newColor = initialColor + 0x01010101;
         j.setPixelColor(newColor, 3, 3);
@@ -131,9 +145,9 @@ describe("Jimp compatibility", () => {
     it("composing with a sprite having transparency", (done) => {
 
         const i1 = new BitmapImage(Tools.getBitmap('singleFrameMonoOpaque'));
-        const j1 = _createJimp(i1.bitmap);
+        const j1 = GifUtil.shareAsJimp(Jimp, i1);
         const i2 = new BitmapImage(Tools.getBitmap('sampleSprite'));
-        const j2 = _createJimp(i2.bitmap);
+        const j2 = GifUtil.shareAsJimp(Jimp, i2);
         j1.composite(j2, 1, 1);
         const result = new BitmapImage(j1.bitmap);
         const expected = new BitmapImage(Tools.getBitmap('singleFrameMonoOpaqueSpriteAt1x1'));
@@ -141,9 +155,3 @@ describe("Jimp compatibility", () => {
         done();
     });
 });
-
-function _createJimp(bitmap) {
-    const j = new Jimp(1, 1);
-    j.bitmap = bitmap;
-    return j;
-}
