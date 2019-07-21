@@ -219,7 +219,7 @@ class BitmapImage {
         else {
             image = new BitmapImage(width, height, fillRGBA);
         }
-        image.blit(this, newX, newY, cropX, cropY, cropWidth, cropHeight);
+        this.blit(image, newX, newY, cropX, cropY, cropWidth, cropHeight);
         this.bitmap = image.bitmap;
         return this;
     }
