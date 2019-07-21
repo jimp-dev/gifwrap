@@ -2,14 +2,19 @@
 
 const assert = require('chai').assert;
 const Path = require('path');
+const Jimp = require('jimp');
 const Bitmaps = require('./bitmaps');
+const { BitmapImage } = require('../../src/index');
 const { GifFrame } = require('../../src/gifframe');
 
 exports.checkBitmap = function (bitmap, width, height, rgbaOrBuf) {
-    assert.strictEqual(bitmap.width, width);
-    assert.strictEqual(bitmap.height, height);
+    assert.strictEqual(bitmap.width, width, "width");
+    assert.strictEqual(bitmap.height, height, "height");
     if (Buffer.isBuffer(rgbaOrBuf)) {
-        assert.strictEqual(bitmap.data, rgbaOrBuf);
+        assert.strictEqual(bitmap.data.length, rgbaOrBuf.length, "length");
+        for (let i = 0; i < rgbaOrBuf.length; ++i ) {
+            assert.strictEqual(rgbaOrBuf[i], bitmap.data[i], "at buffer index "+ i);
+        }
     }
     else if (typeof rgbaOrBuf === 'number') {
         const rgba = rgbaOrBuf
@@ -91,6 +96,10 @@ exports.getGifPath = function (filenameMinusExtension) {
     return exports.getFixturePath(filenameMinusExtension + '.gif');
 };
 
+exports.getImagePath = function (filename) {
+    return exports.getFixturePath(filename);
+};
+
 exports.getSeries = function (seriesName, transparentRGB) {
     const series = Bitmaps.PREMADE[seriesName];
     if (series === undefined) {
@@ -101,6 +110,26 @@ exports.getSeries = function (seriesName, transparentRGB) {
     }
     return series.map(stringPic =>
             (_stringsToBitmap(stringPic, transparentRGB)));
+};
+
+exports.loadBitmapImage = function (imagePath) {
+    return new Promise((resolve, reject) => {
+        new Jimp(imagePath, (err, jimp) => {
+            if (err) return reject(err);
+            resolve(new BitmapImage(jimp.bitmap));
+        });
+    });
+};
+
+exports.saveBitmapImage = function (bitmapImage, path) {
+    let jimp = new Jimp(1, 1, 0);
+    jimp.bitmap = bitmapImage.bitmap;
+    return new Promise((resolve, reject) => {
+        jimp.write(path, (err) => {
+            if (err) return reject(err);
+            resolve();
+        });
+    });
 };
 
 exports.verifyFrameInfo = function (actual, expected, frameIndex=0, note='') {

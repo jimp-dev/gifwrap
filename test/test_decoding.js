@@ -200,6 +200,29 @@ describe("multiframe decoding", () => {
     });
 });
 
+describe("partial frame decoding", () => {
+
+    it("renders partial frames properly onto full frames", () => {
+        return GifUtil.read(Tools.getGifPath('rnaples-offsets-public'))
+        .then(actualGif => {
+            const actualBitmapImage = actualGif.frames[10];
+            return Tools.saveBitmapImage(actualBitmapImage, Tools.getImagePath('rnaples-check.png'))
+            .then(() => {
+                return Tools.loadBitmapImage(Tools.getImagePath('rnaples-frame-10.png'));
+            })
+            .then(expectedBitmapImage => {
+                const expectedBitmap = expectedBitmapImage.bitmap;
+                Tools.checkBitmap(
+                    actualBitmapImage.bitmap,
+                    expectedBitmap.width,
+                    expectedBitmap.height,
+                    expectedBitmap.data
+                );
+            });
+        });
+    });
+});
+
 function _compareGifToSeries(actualGif, expectedSeries, options) {
 
     assert.strictEqual(actualGif.width, expectedSeries[0].width);
