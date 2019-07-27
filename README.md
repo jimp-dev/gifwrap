@@ -68,7 +68,7 @@ GIFs do not support partial transparency, so within `frame.bitmap.data`, pixels 
 const { GifUtil } = require('gifwrap');
 GifUtil.read("fancy.gif").then(inputGif => {
 
-    inputGif.frames.foreach(frame => {
+    inputGif.frames.forEach(frame => {
 
         const buf = frame.bitmap.data;
         frame.scanAllCoords((x, y, bi) => {
@@ -139,10 +139,10 @@ const Jimp = require('jimp');
 const j = new Jimp(200, 100, 0xFFFFFFFF);
 
 // create a frame clone of a Jip bitmap
-const fCopied = new GifFrame(new BitmapImage(j));
+const fCopied = new GifFrame(new BitmapImage(j.bitmap));
 
 // create a frame that shares a bitmap with Jimp (one way)
-const fShared1 = new GifFrame(j);
+const fShared1 = new GifFrame(j.bitmap);
 
 // create a frame that shares a bitmap with Jimp (another way)
 const fShared2 = new GifFrame(1, 1, 0); // any GifFrame
