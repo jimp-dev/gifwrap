@@ -85,7 +85,7 @@ class GifCodec
      * Encodes a GIF from provided frames. Each pixel having an alpha value of 0x00 renders as transparent within the encoding, while all pixels of non-zero alpha value render as opaque.
      * 
      * @param {GifFrame[]} frames Array of frames to encode
-     * @param {object} spec An optional object that may provide values for `loops` and `colorScope`, as defined for the Gif class. However, `colorSpace` may also take the value Gif.GlobalColorsPreferred (== 0) to indicate that the encoder should attempt to create only a global color table. `loop` defaults to 0, looping indefinitely, and `colorScope` defaults to Gif.GlobalColorsPreferred.
+     * @param {object} spec An optional object that may provide values for `loops` and `colorScope`, as defined for the Gif class. However, `colorSpace` may also take the value Gif.GlobalColorsPreferred (== 0) to indicate that the encoder should attempt to create only a global color table. `loop` defaults to null, playing once, and `colorScope` defaults to Gif.GlobalColorsPreferred.
      * @return {Promise} A Promise that resolves to an instance of the Gif class, representing the encoded GIF.
      * @throws {GifError} Error upon encountered an encoding-related problem with a GIF, so that the caller can distinguish between software errors and problems with GIFs.
      */
@@ -100,7 +100,7 @@ class GifCodec
             spec = Object.assign({}, spec); // don't munge caller's spec
             spec.width = dims.maxWidth;
             spec.height = dims.maxHeight;
-            spec.loops = spec.loops || 0;
+            spec.loops = spec.loops;
             spec.colorScope = spec.colorScope || Gif.GlobalColorsPreferred;
 
             return Promise.resolve(this._encodeGif(frames, spec));
