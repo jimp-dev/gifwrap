@@ -2,10 +2,17 @@
 
 const Omggif = require('omggif');
 const { Gif, GifError } = require('./gif');
-let GifUtil; // allow circular dependency with GifUtil
-process.nextTick(() => {
-    GifUtil = require('./gifutil');
-});
+
+// allow circular dependency with GifUtil
+function GifUtil() {
+    const data = require('./gifutil');
+
+    GifUtil = function () {
+      return data;
+    };
+
+  return data;
+}
 
 const { GifFrame } = require('./gifframe');
 
@@ -95,7 +102,7 @@ class GifCodec
             if (frames === null || frames.length === 0) {
                 throw new GifError("there are no frames");
             }
-            const dims = GifUtil.getMaxDimensions(frames);
+            const dims = GifUtil().getMaxDimensions(frames);
 
             spec = Object.assign({}, spec); // don't munge caller's spec
             spec.width = dims.maxWidth;
@@ -170,10 +177,10 @@ class GifCodec
     _encodeGif(frames, spec) {
         let colorInfo;
         if (spec.colorScope === Gif.LocalColorsOnly) {
-            colorInfo = GifUtil.getColorInfo(frames, 0);
+            colorInfo = GifUtil().getColorInfo(frames, 0);
         }
         else {
-            colorInfo = GifUtil.getColorInfo(frames, 256);
+            colorInfo = GifUtil().getColorInfo(frames, 256);
             if (!colorInfo.colors) { // if global palette impossible
                 if (spec.colorScope === Gif.GlobalColorsOnly) {
                     throw new GifError(
