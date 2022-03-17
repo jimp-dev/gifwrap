@@ -10,17 +10,6 @@ The library uses Dean McNamee's [`omggif`](https://github.com/deanm/omggif) GIF 
 
 At present, the module only works in Node.js. Includes Typescript typings.
 
-## Notice
-
-As of v0.10.0, a default behavior has been changed to restore functionality from [`omggif`](https://github.com/deanm/omggif) to allow a non-looping GIF with null. 
-
-Previously the default allowed for infinite loops, but now you need to specify that behavior as follows. 
-
-```js
-// infinite loops
-codec.encodeGif(frames, { loops: 0 });
-```
-
 ## Installation
 
 ```
@@ -295,7 +284,7 @@ Property | Description
 --- | ---
 width | width of the GIF at its widest
 height | height of the GIF at its highest
-loops | the number of times the GIF should loop before stopping; 0 => loop indefinately
+loops | the number of times the GIF should loop before stopping; 0 => loop indefinitely
 usesTransparency | boolean indicating whether at least one frame contains at least one transparent pixel
 colorScope | the scope of the color tables as encoded within the GIF; either Gif.GlobalColorsOnly (== 1) or Gif.LocalColorsOnly (== 2).
 frames | a array of GifFrame instances, one for each frame of the GIF
@@ -638,7 +627,7 @@ Decodes a GIF from a Buffer to yield an instance of Gif. Transparent pixels of t
 | Param | Type | Description |
 | --- | --- | --- |
 | frames | [<code>Array.&lt;GifFrame&gt;</code>](#GifFrame) | Array of frames to encode |
-| spec | <code>object</code> | An optional object that may provide values for `loops` and `colorScope`, as defined for the Gif class. However, `colorSpace` may also take the value Gif.GlobalColorsPreferred (== 0) to indicate that the encoder should attempt to create only a global color table. `loop` defaults to null, playing once, and `colorScope` defaults to Gif.GlobalColorsPreferred. |
+| spec | <code>object</code> | An optional object that may provide values for `loops` and `colorScope`, as defined for the Gif class. However, `colorSpace` may also take the value Gif.GlobalColorsPreferred (== 0) to indicate that the encoder should attempt to create only a global color table. `loop` defaults to 0, looping indefinitely. Set `loop` to null to disable looping, playing only once. `colorScope` defaults to Gif.GlobalColorsPreferred. |
 
 Encodes a GIF from provided frames. Each pixel having an alpha value of 0x00 renders as transparent within the encoding, while all pixels of non-zero alpha value render as opaque.
 

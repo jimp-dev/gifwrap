@@ -19,7 +19,7 @@ class Gif {
      * --- | ---
      * width | width of the GIF at its widest
      * height | height of the GIF at its highest
-     * loops | the number of times the GIF should loop before stopping; 0 => loop indefinately
+     * loops | the number of times the GIF should loop before stopping; 0 => loop indefinitely
      * usesTransparency | boolean indicating whether at least one frame contains at least one transparent pixel
      * colorScope | the scope of the color tables as encoded within the GIF; either Gif.GlobalColorsOnly (== 1) or Gif.LocalColorsOnly (== 2).
      * frames | a array of GifFrame instances, one for each frame of the GIF
