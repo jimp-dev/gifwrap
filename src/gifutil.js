@@ -332,11 +332,11 @@ function _quantize(imageOrImages, method, maxColorIndexes, modifier, dither) {
         inputContainers.push(inputContainer);
     });
     
-    const limitedPalette = quantizer.quantize();
+    const limitedPalette = quantizer.quantizeSync();
 
     for (let i = 0; i < images.length; ++i) {
         const imageBuf = images[i].bitmap.data;
-        const outputContainer = imageMaker.quantize(inputContainers[i], limitedPalette);
+        const outputContainer = imageMaker.quantizeSync(inputContainers[i], limitedPalette);
         const outputArray = outputContainer.toUint32Array();
         for (let bi = 0, ai = 0; bi < imageBuf.length; bi += 4, ++ai) {
             imageBuf.writeUInt32LE(outputArray[ai], bi);
