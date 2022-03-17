@@ -10,6 +10,17 @@ The library uses Dean McNamee's [`omggif`](https://github.com/deanm/omggif) GIF 
 
 At present, the module only works in Node.js. Includes Typescript typings.
 
+## Notice
+
+A default behavior has been changed to restore functionality from [`omggif`](https://github.com/deanm/omggif) to allow a non-looping GIF with null. 
+
+Previously the default allowed for infinite loops, but now you need to specify that behavior as follows. 
+
+```js
+// infinite loops
+codec.encodeGif(frames, { loops: 0 });
+```
+
 ## Installation
 
 ```
