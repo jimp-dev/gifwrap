@@ -27,7 +27,7 @@
   },
   "homepage": "https://github.com/jtlapp/gifwrap#readme",
   "dependencies": {
-    "image-q": "^1.1.1",
+    "image-q": "^4.0.0",
     "omggif": "^1.0.10"
   },
   "devDependencies": {
