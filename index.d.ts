@@ -102,7 +102,7 @@ export class GifCodec implements GifEncoder, GifDecoder {
 
     constructor(options?: GifCodecOptions);
 
-    encodeGif(frames: GifFrame[], spec: GifSpec): Promise<Gif>;
+    encodeGif(frames: GifFrame[], spec?: GifSpec): Promise<Gif>;
     decodeGif(buffer: Buffer): Promise<Gif>;
 }
 
